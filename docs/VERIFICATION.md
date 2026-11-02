@@ -1,5 +1,9 @@
 # Doğrulama · 2026-11-02
 
+**0.2-hybrid güncellemesi:** mevcut 205 kontrol + 15 hibrit, 53 yüzey socket ve
+2 ek profil kontrolü = **275 kontrol geçti**. Gerçek shader/CPU render silueti karşılaştırması
+da geçti. Güncel kapsam ve sınırlar [HYBRID.md](HYBRID.md) dosyasında.
+
 Nihai `bash scripts/validate.sh` çalışması Godot **4.6.3-stable official** üzerinde
 başarılı: **205 kontrol, 0 başarısızlık**, ayrıca temiz import ve ana sahne smoke.
 

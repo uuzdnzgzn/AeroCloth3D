@@ -4,7 +4,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 import hashlib
 
 root = Path(__file__).resolve().parents[1]
-output = root / "artifacts/AeroCloth3D-0.1-rebuild.zip"
+output = root / "artifacts/AeroCloth3D-0.2-hybrid.zip"
 with ZipFile(output, "w", ZIP_DEFLATED) as archive:
     for path in sorted(root.rglob("*")):
         relative = path.relative_to(root)

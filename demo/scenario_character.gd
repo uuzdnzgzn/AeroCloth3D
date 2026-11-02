@@ -5,6 +5,7 @@ signal changed
 const Geometry = preload("res://demo/scenario_meshes.gd")
 const Cloth = preload("res://demo/test_cloth.gd")
 const Piece = preload("res://addons/aero_cloth_3d/core/aero_cloth_piece_3d.gd")
+const SurfaceSocket = preload("res://addons/aero_cloth_3d/core/aero_cloth_surface_socket_3d.gd")
 const MODEL_PATH := "res://demo/assets/recovery_character/character.glb"
 
 var skeleton: Skeleton3D
@@ -19,9 +20,11 @@ var under_shoulder: MeshInstance3D
 var shoulder_anchor: Node3D
 var chest_anchor: Node3D
 var hip_anchor: Node3D
+var shoulder_socket: Node3D
+var cloth_socket: Node3D
 var connection_markers: Array[MeshInstance3D] = []
 var selected := "shoulder"
-var accessory_rule := 0 # 0: follow parent; 1: release on parent detach.
+var accessory_rule := 0 # 0: shoulder follow; 1: release with shoulder; 2: CPU cloth triangle.
 var chest_equipped := true
 var inner_equipped := true
 var shoulder_covers_inner := true
@@ -51,10 +54,11 @@ func _ready() -> void:
 	hip_anchor = _anchor("Hips", Vector3(-0.27, 1.00, 0.16))
 	_build_layers()
 	_build_shoulder()
-	_build_bag()
 	cloth = Cloth.new()
 	hip_anchor.add_child(cloth)
 	cloth.name = "PreparedClothPatch"
+	_build_cloth_socket()
+	_build_bag()
 	set_selected("shoulder")
 	refresh_coverage()
 
@@ -125,13 +129,22 @@ func _build_shoulder() -> void:
 	outline = Geometry.line(box_points, Color("43e1c8"))
 	visual.add_child(outline)
 
+func _build_cloth_socket() -> void:
+	cloth_socket = SurfaceSocket.new()
+	cloth_socket.name = "CPUClothTriangleSocket"
+	add_child(cloth_socket)
+	cloth_socket.configure(cloth, Vector3i(33, 42, 34), Vector3(0.3, 0.3, 0.4), 0.04)
+	cloth_socket.set_physics_process(false)
+
 func _build_bag() -> void:
-	var socket := Node3D.new()
-	shoulder.get_visual_root().add_child(socket)
-	socket.position = Vector3(-0.14, -0.16, 0.23)
+	shoulder_socket = Node3D.new()
+	shoulder_socket.name = "ShoulderAccessorySocket"
+	shoulder.get_visual_root().add_child(shoulder_socket)
+	shoulder_socket.position = Vector3(-0.14, -0.16, 0.23)
 	bag = Piece.new()
 	add_child(bag)
 	bag.name = "IndependentAccessory"
+	bag.process_physics_priority = 2
 	bag.collision_size = Vector3(0.12, 0.18, 0.08)
 	var visual := Node3D.new()
 	var pouch: MeshInstance3D = Geometry.box(Vector3(0.12, 0.16, 0.07), Color("ad7656"))
@@ -140,8 +153,23 @@ func _build_bag() -> void:
 	var flap: MeshInstance3D = Geometry.box(Vector3(0.125, 0.045, 0.075), Color("d69a69"))
 	visual.add_child(flap)
 	flap.position.y = -0.005
-	bag.configure(socket, visual, [Vector3(0, 0.03, 0)], 0.2)
+	bag.configure(shoulder_socket, visual, [Vector3(0, 0.03, 0)], 0.2)
 	bag.state_changed.connect(_on_piece_changed)
+
+func _accessory_parent_equipped() -> bool:
+	return cloth.equipped if accessory_rule == 2 and is_instance_valid(cloth) else shoulder.equipped
+
+func _sync_accessory_anchor() -> void:
+	var target: Node3D = cloth_socket if accessory_rule == 2 else shoulder_socket
+	if accessory_rule == 2:
+		cloth_socket.update_from_surface()
+	if bag.anchor != target:
+		bag.anchor = target
+		# Changing an authored attachment is not an impact or an item repair.
+		# Invalidate the anchor-velocity sample to avoid a spurious release impulse.
+		bag._anchor_sample_valid = false
+		bag._anchor_velocity = Vector3.ZERO
+	bag._update_attached_pose()
 
 func _on_piece_changed(_piece: Node = null) -> void:
 	if is_instance_valid(bag) and accessory_rule == 1 and shoulder.get_active_connection_count() == 0 and bag.get_active_connection_count() > 0:
@@ -158,7 +186,8 @@ func refresh_coverage() -> void:
 	chestplate.visible = chest_equipped
 	# The bag owns its damage/equipped state; parent visibility only gates its display.
 	if is_instance_valid(bag):
-		bag.get_visual_root().visible = bag.equipped and shoulder.equipped
+		_sync_accessory_anchor()
+		bag.get_visual_root().visible = bag.equipped and _accessory_parent_equipped()
 		_sync_effective_activity()
 	if is_instance_valid(outline):
 		outline.visible = selected == "shoulder" and shoulder.equipped
@@ -191,8 +220,10 @@ func set_active(value: bool) -> void:
 	_sync_effective_activity()
 
 func _sync_effective_activity() -> void:
+	if is_instance_valid(cloth_socket):
+		cloth_socket.set_physics_process(active_in_lab and accessory_rule == 2 and cloth.equipped)
 	for piece in [shoulder, bag]:
-		var effective: bool = active_in_lab and piece.equipped and (shoulder.equipped if piece == bag else true)
+		var effective: bool = active_in_lab and piece.equipped and (_accessory_parent_equipped() if piece == bag else true)
 		piece.set_physics_process(effective)
 		if piece.get_active_connection_count() == 0:
 			piece.rigid_body.freeze = not effective
@@ -294,6 +325,8 @@ func set_debug(mode: int) -> void:
 
 func _collect_meshes(node: Node3D) -> Array[MeshInstance3D]:
 	var result: Array[MeshInstance3D] = []
+	if node == cloth:
+		return [cloth.get_debug_source()]
 	if node.is_queued_for_deletion() or node == debug_root or node == outline or (node is MeshInstance3D and node in connection_markers):
 		return result
 	if node is MeshInstance3D:

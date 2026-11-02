@@ -1,5 +1,8 @@
 # Ölçüm · 2026-11-02
 
+Bu dosya **0.1-rebuild arşiv ölçümüdür**. Güncel 0.2 hibrit yolun karşılaştırması
+[HYBRID.md](HYBRID.md) ve [yeni ham veri özeti](../artifacts/hybrid-summary.md) içindedir.
+
 **Bu, hedef oyun donanımının performans sonucu değildir.** Render edilen test
 GPU yerine Mesa **llvmpipe (LLVM 19.1.7, 256 bits)** yazılım renderer'ı kullanır.
 Bu ortamda çizimli laboratuvar yavaştır; bu sonuçtan 60 FPS uyumluluğu çıkarılamaz.

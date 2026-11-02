@@ -16,9 +16,9 @@ check_log() {
 "$GODOT_BIN" --version
 "$GODOT_BIN" --headless --editor --path . --import --quit > artifacts/import.log 2>&1
 check_log artifacts/import.log
-for suite in tests/test_damage.gd tests/test_scenario.gd tests/test_workspace.gd tests/test_profile.gd; do
+for suite in tests/test_damage.gd tests/test_scenario.gd tests/test_workspace.gd tests/test_profile.gd tests/test_hybrid.gd tests/test_surface_socket.gd; do
   log="artifacts/$(basename "$suite" .gd).log"
-  "$GODOT_BIN" --headless --path . --script "$suite" > "$log" 2>&1
+  timeout 60s "$GODOT_BIN" --headless --path . --script "$suite" > "$log" 2>&1
   check_log "$log"
   cat "$log"
 done

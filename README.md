@@ -1,6 +1,11 @@
 # AeroCloth3D · Giyilebilir eşya laboratuvarı
 
-Boş depodan yeniden kurulan **0.1-rebuild prototipi**. Önceki 0.9 sürümünün
+Güncel sürüm **0.2-hybrid**: CPU'da 99 fizik noktası, GPU vertex shader'da
+1.353 vertex'li sabit görsel kumaş. Çanta CPU kumaş üçgenine bağlanıp kopabilir.
+Hasar panelinde **Çanta kumaş üçgenini izlesin** seç; Hareket panelinden GPU ve
+CPU referans yollarını karşılaştır. [Teknik açıklama ve doğrulama](docs/HYBRID.md).
+
+Boş depodan yeniden kurulan **0.1-rebuild prototipi temelinde**. Önceki 0.9 sürümünün
 kurtarıldığı anlamına gelmez. Animasyonlu gerçek bir iskelet/mesh üzerinde,
 hazırlanmış bağlantı kopması ve alt katmanın geri açılması gösterilir.
 
@@ -44,7 +49,7 @@ Giysi çıkarıp takma, bağlantı düzenleme ve hasar da geri alınabilir.
 Bu, keyfi varlıkları otomatik hazırlayan tam bir giysi editörü değildir.
 Kumaş çözümü ve askıda zırh hareketi prototiptir. Askıdaki zırh ve çanta karakteri
 geri itmez. Genel beden/giysi teması, kumaştan serbest kesme, morph zinciri,
-Blender eklentisi, üçgen kumaş socket'i ve çantanın ağırlığının kumaşı çekmesi
+Blender eklentisi ve çantanın ağırlığının kumaşı çekmesi
 henüz uygulanmadı. Blender'ın yerine modelleme/rig aracı kurulmadı.
 
 ## Sürümler ve varlıklar

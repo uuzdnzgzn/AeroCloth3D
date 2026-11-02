@@ -1,5 +1,8 @@
 # Uygulama kararları
 
+0.2 güncellemesi: [HYBRID.md](HYBRID.md) geçerli kumaş render ve aksesuar yolunu
+tanımlar. CPU proxy + GPU vertex deformasyonu ve CPU üçgen socket'i uygulanmıştır.
+
 ## Parçaya göre hareket
 
 Temel beden ve sabit giysi Blender'da riglenir; GLB animasyonu Godot'ta oynar.
@@ -18,12 +21,12 @@ Mesh/şekil üretimi hasar anında yapılmaz. Başlangıç hızı animasyon anch
 sahiptir. Varsayılan kural zırhla birlikte gitmesidir; alternatifte zırh düşünce
 ayrı gövde olur. Çantaya ayrı darbe de uygulanabilir. Bu takip tek yönlüdür:
 çantanın kütlesi zırhın salınımını, kumaşı veya karakter animasyonunu etkilemez.
-Deforme kumaş için üç köşeli/barycentric socket daha uygun sonraki adımdır.
+Rule 2'de çanta CPU kumaşındaki üç köşeli/barycentric socket'i takip eder.
 
 Kumaş, yalnız kalça çevresindeki 9×11 düşük çözünürlüklü test parçasıdır.
 Verlet entegrasyonu, beş mesafe düzeltme turu, boyanmış serbestlik, kalça
-elipsoidi ve zemin kullanır. İki hazırlanmış üst pin grubu kopabilir. Her kare
-küçük ArrayMesh buffer'ı yeniden yüklenir; bu maliyet ölçüme dahildir.
+elipsoidi ve zemin kullanır. İki hazırlanmış üst pin grubu kopabilir. Her fizik adımında
+99 nokta texture'a aktarılır; sabit ayrıntılı mesh GPU'da deforme olur.
 
 ## Durum ve geri alma
 

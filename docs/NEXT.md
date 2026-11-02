@@ -10,8 +10,8 @@ yeniden kurmak bu aşamanın sonucu değildir; yeni kod ve kanıtlar bu depodad�
    belirlemedi. Bu bilgiyle gerçek GPU üzerinde üç karakter/darbe ölçümünü tekrarla.
 3. **Temas:** askıda zırhın bedene girişini sınırlayan basit temas; kumaşın gerçek
    bacak/kalça hareketiyle güncellenen proxy'si. Genel kendisiyle çarpışma yok.
-4. **Kumaşa aksesuar:** üçgen/barycentric socket ve üç köşe normalinden çerçeve.
-   Sadece takip ve çift yönlü kütle/kuvvet aktarımını ayrı seçenekler olarak ölç.
+4. **Kumaşa aksesuar:** CPU üçgen/barycentric socket 0.2'de uygulandı. Keyfi
+   üçgeni editörden seçme ve çift yönlü kütle/kuvvet aktarımı henüz yok.
 5. **Katman karşılaştırması:** aynı giyside region-mesh, önbellekli indeks ve
    compact vertex varyantlarını draw/skin/physics/memory olarak ayrı ölç.
 6. **Morph zinciri:** beden temelinden yeniden hesaplama, fit sürücüleri ve

@@ -47,6 +47,8 @@ var benchmark_last_frame := 0
 var benchmark_result: Dictionary = {}
 var benchmark_output := "res://artifacts/benchmark.json"
 var benchmark_characters := 3
+var cloth_renderer := "gpu"
+var comparison_fixed_step := false
 var benchmark_process_ms: Array[float] = []
 var benchmark_physics_ms: Array[float] = []
 var benchmark_cloth_ms: Array[float] = []
@@ -68,11 +70,27 @@ func _ready() -> void:
 			benchmark_output = argument.trim_prefix("--report=")
 		elif argument.begins_with("--characters="):
 			benchmark_characters = clampi(argument.trim_prefix("--characters=").to_int(), 1, 3)
+		elif argument.begins_with("--cloth-renderer="):
+			cloth_renderer = argument.trim_prefix("--cloth-renderer=")
+			for actor in actors:
+				actor.cloth.gpu_deformation = cloth_renderer != "cpu"
+		elif argument == "--cloth-accessory":
+			for actor in actors:
+				actor.accessory_rule = 2
+				actor.refresh_coverage()
+		elif argument == "--comparison-fixed-step":
+			comparison_fixed_step = true
 		elif argument.begins_with("--capture="):
 			automation_mode = argument.trim_prefix("--capture=")
 			screenshot_frame = 100
 			if automation_mode == "lab-three":
 				_set_count(3)
+			elif automation_mode == "hybrid-cloth":
+				_select_item("cloth")
+				for actor in actors:
+					actor.accessory_rule = 2
+					actor.refresh_coverage()
+				_build_tools()
 
 func _build_theme() -> void:
 	var custom := Theme.new()
@@ -376,7 +394,7 @@ func _preparation_tools() -> void:
 			value.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			value.value_changed.connect(_edit_connection.bind(index, axis))
 			row.add_child(value)
-	_text(tools_panel, "Çanta tek vertex yerine zırhın yerel socket çerçevesini izler. Deforme kumaşa üçgen/barycentric socket bağlama sonraki adımdır.")
+	_text(tools_panel, "Çanta zırh socket’ini veya CPU kumaş üçgenini izler. Bağlantı kuralını Hasar bölümünden seç. Ağırlığı kumaşa geri aktarılmaz.")
 
 func _edit_connection(value: float, index: int, axis: int) -> void:
 	_record("Bağlantı yerleştir", func() -> void:
@@ -437,6 +455,8 @@ func _collision_tools() -> void:
 func _layer_tools() -> void:
 	tools_panel.add_child(_label("ÖRTME İLİŞKİSİ", 11, MUTED))
 	var description: String = {"shoulder":"Omuz zırhı → iç omuz bölgesi\nİki sağlam bağlantıda kapalı; ilk kopmada görünür.","chest":"Göğüslük → iç ön gövde\nGöğüslük çıkarılınca geri görünür.","inner":"İç katman → ön / arka / omuz\nYalnız kesin örtülen bölge gizlenir.","bag":"Çanta → omuz zırhı socket’i\nAlt katman örtme kuralı yok.","cloth":"Kumaş → kalça kemiği\nHareket sınırlarında alt katman korunur."}[selected]
+	if selected == "bag" and actors[0].accessory_rule == 2:
+		description = "Çanta → CPU kumaş üçgeni\nÜç köşeden konum ve yön; alt katman örtme kuralı yok."
 	_text(tools_panel, description, TEXT)
 	_text(tools_panel, "Sıralama listesi dıştan içe ilişkiyi gösterir. Bu örnekte örtme bölgeleri hazırlanmıştır; sırayı sürüklemek otomatik bir örtme kuralı üretmez.")
 	_text(tools_panel, "Bölge gizleme: çizim azalır. Kaynak mesh/bellek korunur. Bedenin skinning maliyeti devam eder; vertex sıkıştırma uygulanmadı.")
@@ -452,16 +472,22 @@ func _damage_tools() -> void:
 		_text(tools_panel, "Bu parçada hazırlanmış hasar bağlantısı yok. Senaryo için iki bağlantılı omuz zırhını seç.")
 		_button(tools_panel, "Omuz zırhını seç", _select_item.bind("shoulder"))
 		return
-	_text(tools_panel, "1. darbe → kalan bağlantıda salınma\n2. darbe → fiziksel düşüş\nAçılan iç bölge hemen geri görünür.", TEXT)
+	var damage_hint := "1. darbe → kalan bağlantıda salınma\n2. darbe → fiziksel düşüş\nAçılan iç bölge hemen geri görünür."
+	if selected == "bag": damage_hint = "Tek bağlantı → darbe ile kopma ve fiziksel düşüş. Ana parçanın hasarından bağımsızdır."
+	elif selected == "cloth": damage_hint = "İlk darbe üst pin grubunu bırakır. İkinci darbe bütün kumaşı serbest bırakır. Bağlı çanta yüzeyi izler."
+	_text(tools_panel, damage_hint, TEXT)
 	_button(tools_panel, "⚡ Seçili parçaya darbe", _hit, true)
-	if selected == "shoulder":
+	if selected in ["shoulder", "cloth", "bag"]:
 		var rule := OptionButton.new()
 		rule.add_item("Çanta zırhı takip etsin")
 		rule.add_item("Zırh düşünce çanta da ayrılsın")
+		rule.add_item("Çanta kumaş üçgenini izlesin")
 		rule.selected = actors[0].accessory_rule
 		rule.item_selected.connect(func(index: int) -> void:
 			_record("Çanta bağlantı kuralı", func() -> void:
-				for actor in actors: actor.accessory_rule = index
+				for actor in actors:
+					actor.accessory_rule = index
+					actor.refresh_coverage()
 			)
 		)
 		tools_panel.add_child(rule)
@@ -470,10 +496,22 @@ func _damage_tools() -> void:
 				for i in range(count): actors[i].bag.apply_hit()
 			)
 		)
-	_text(tools_panel, "Çıkarma / tekrar takma hasarı korur. Sıfırla tüm başlangıç durumunu geri kurar. Geri al hasar ve giysi değişikliklerini geri getirir.")
+	_text(tools_panel, "Çıkarma / tekrar takma hasarı korur. Sıfırla hasarı onarır; hazırlama ayarlarını korur. Geri al hasar ve giysi değişikliklerini geri getirir.")
 	_text(tools_panel, "Çanta takibi tek yönlüdür; çantanın ağırlığı kumaşı veya iskeleti çekmez.")
 
 func _motion_tools() -> void:
+	tools_panel.add_child(_label("Kumaş deformasyonu", 13, TEXT))
+	var backend := OptionButton.new()
+	backend.add_item("GPU · sabit görsel mesh")
+	backend.add_item("CPU · karşılaştırma referansı")
+	backend.selected = 0 if cloth_renderer == "gpu" else 1
+	backend.item_selected.connect(func(index: int) -> void:
+		cloth_renderer = "gpu" if index == 0 else "cpu"
+		for actor in actors:
+			actor.cloth.gpu_deformation = index == 0
+			actor.cloth._upload()
+	)
+	tools_panel.add_child(backend)
 	_text(tools_panel, "Karakter sayısı", TEXT)
 	var counts := HBoxContainer.new()
 	tools_panel.add_child(counts)
@@ -481,7 +519,7 @@ func _motion_tools() -> void:
 	_button(counts, "3 karakter", _set_count.bind(3), count == 3)
 	_button(tools_panel, "Üç karakterde kopma ölçümü", _start_benchmark, true)
 	_text(tools_panel, "Ölçüm: ısıtma → üç karaktere aynı karede ilk darbe → ikinci kopma → tekrar. Kare ortalaması, p99, tepe ve olay çevresi kaydedilir.")
-	_text(tools_panel, "CPU kumaş: 99 nokta × 5 çözüm adımı. Görünmeyen karakterler ve çıkarılan kumaş hesaplanmaz. Gizli iç bölgeler saklanır, tekrar açılırken mesh üretilmez.")
+	_text(tools_panel, "CPU: 99 fizik noktası × 5 adım. GPU: 1.353 vertex. Sabit mesh ve 1.584 bayt proxy güncellemesi; GPU’dan geri okuma yok. Çanta üçgeni CPU’da izler.")
 	_text(tools_panel, "Bu ortamın sonuçları donanım hedefi değildir. Hedef FPS ve en düşük cihaz belirlenmeden performans garantisi verilmez.")
 
 func _select_item(id: String) -> void:
@@ -504,7 +542,7 @@ func _refresh() -> void:
 		button.add_theme_color_override("font_color", TEAL if id == selected else TEXT)
 		var label: Label = rows[id]["sub"]
 		label.text = "  " + ("Giyili" if actors[0].is_equipped(id) else "Çıkarıldı · durum saklanıyor")
-		if id == "bag" and actors[0].bag.equipped and not actors[0].shoulder.equipped:
+		if id == "bag" and actors[0].bag.equipped and not actors[0]._accessory_parent_equipped():
 			label.text = "  Ana zırh çıkarıldı · bekliyor"
 	for i in range(section_buttons.size()):
 		section_buttons[i].add_theme_stylebox_override("normal", _style(Color("16423f") if i == section else Color("132033"), TEAL if i == section else Color("26364a"), 6))
@@ -714,6 +752,7 @@ func _finish_benchmark() -> void:
 		event["window_max_ms"] = window.max()
 	benchmark_result = {"engine":Engine.get_version_info(),"os":OS.get_name(),"cpu":OS.get_processor_name(),"renderer":RenderingServer.get_video_adapter_name(),"rendering_method":RenderingServer.get_current_rendering_method(),"headless":DisplayServer.get_name() == "headless","viewport":str(viewport.size),"characters":count,"warmup_frames":120,"sample_frames":benchmark_frames.size(),"mean_frame_ms":_mean(benchmark_frames),"p99_frame_ms":_percentile(benchmark_frames,0.99),"max_frame_ms":max_value,"mean_process_monitor_ms":_mean(benchmark_process_ms),"mean_physics_monitor_ms":_mean(benchmark_physics_ms),"mean_cloth_script_ms":_mean(benchmark_cloth_ms),"events":benchmark_events,"raw_frame_ms":benchmark_frames,"limitations":"Container CPU/software renderer or headless result only; not target hardware FPS. Headless excludes drawing/GPU skinning. Wall frames include limiter/scheduler/UI; process and physics monitors are separately recorded. call_ms includes UI state signals. Event windows include preceding 2 and following 5 wall frames."}
 	var file := FileAccess.open(benchmark_output, FileAccess.WRITE)
+	benchmark_result.merge({"cloth_backend":cloth_renderer,"accessory_rule":actors[0].accessory_rule,"fixed_step_comparison":comparison_fixed_step,"proxy_points_per_character":99,"visual_vertices_per_character":1353,"proxy_upload_bytes_per_tick_per_character":1584,"cloth_mesh_builds":actors[0].cloth.mesh_build_count,"gpu_readback":false})
 	if file: file.store_string(JSON.stringify(benchmark_result, "\t"))
 	status.text = "Ölçüm bitti · ort. %.2f / p99 %.2f / tepe %.2f ms · %s" % [benchmark_result["mean_frame_ms"],benchmark_result["p99_frame_ms"],max_value,benchmark_output]
 	var brief: Dictionary = benchmark_result.duplicate()

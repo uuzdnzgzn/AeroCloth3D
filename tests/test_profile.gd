@@ -45,6 +45,12 @@ func _run() -> void:
 	invalid = authored.duplicate(true)
 	invalid["shoulder_covers_inner"] = "true"
 	check(not Profile.validate(invalid), "Invalid coverage type rejected")
+	actor.accessory_rule = 2
+	var cloth_profile: Variant = JSON.parse_string(JSON.stringify(Profile.encode(actor)))
+	check(Profile.validate(cloth_profile), "CPU cloth socket rule survives JSON roundtrip")
+	actor.accessory_rule = 0
+	Profile.apply(actor,cloth_profile)
+	check(actor.bag.anchor == actor.cloth_socket and actor.shoulder.get_active_connection_count() == 1, "Profile restores cloth socket without repairing item damage")
 	actor.queue_free()
 	await process_frame
 	print("PROFILE_TESTS: %d checks, %d failures" % [checks, failures])

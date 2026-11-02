@@ -22,7 +22,7 @@ static func validate(data: Variant) -> bool:
 		if not (weight is float or weight is int) or not is_finite(float(weight)) or weight < 0 or weight > 1: return false
 	var rule: Variant = data.get("accessory_rule")
 	if not (rule is float or rule is int): return false
-	return (rule == 0.0 or rule == 1.0) and data.get("shoulder_covers_inner") is bool
+	return (rule == 0.0 or rule == 1.0 or rule == 2.0) and data.get("shoulder_covers_inner") is bool
 
 static func apply(actor: Node3D, data: Dictionary) -> void:
 	for i in range(2):
