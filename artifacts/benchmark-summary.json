@@ -1,0 +1,50 @@
+[
+  {
+    "file": "benchmark-headless-1.json",
+    "characters": 1,
+    "mean_ms": 6.902,
+    "p99_ms": 7.974,
+    "peak_ms": 10.247,
+    "event_window_peak_ms": 8.121,
+    "max_hit_call_ms": 0.884,
+    "mean_physics_monitor_ms": 15.61,
+    "mean_cloth_script_ms": 0.805,
+    "renderer": "headless (drawing excluded)"
+  },
+  {
+    "file": "benchmark-headless-3.json",
+    "characters": 3,
+    "mean_ms": 6.904,
+    "p99_ms": 11.454,
+    "peak_ms": 14.249,
+    "event_window_peak_ms": 10.388,
+    "max_hit_call_ms": 2.58,
+    "mean_physics_monitor_ms": 17.533,
+    "mean_cloth_script_ms": 2.477,
+    "renderer": "headless (drawing excluded)"
+  },
+  {
+    "file": "benchmark-rendered-1.json",
+    "characters": 1,
+    "mean_ms": 88.467,
+    "p99_ms": 109.712,
+    "peak_ms": 271.975,
+    "event_window_peak_ms": 113.234,
+    "max_hit_call_ms": 1.95,
+    "mean_physics_monitor_ms": 3.936,
+    "mean_cloth_script_ms": 0.926,
+    "renderer": "llvmpipe (LLVM 19.1.7, 256 bits)"
+  },
+  {
+    "file": "benchmark-rendered-3.json",
+    "characters": 3,
+    "mean_ms": 101.401,
+    "p99_ms": 125.135,
+    "peak_ms": 160.874,
+    "event_window_peak_ms": 116.698,
+    "max_hit_call_ms": 2.712,
+    "mean_physics_monitor_ms": 6.81,
+    "mean_cloth_script_ms": 2.449,
+    "renderer": "llvmpipe (LLVM 19.1.7, 256 bits)"
+  }
+]

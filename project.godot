@@ -1,0 +1,26 @@
+; AeroCloth3D recovered-scenario prototype. Tested with Godot 4.6.3.
+config_version=5
+
+[application]
+config/name="AeroCloth3D · Wearable Lab"
+run/main_scene="res://demo/CharacterWardrobe.tscn"
+config/features=PackedStringArray("4.6", "GL Compatibility")
+
+[display]
+window/size/viewport_width=1440
+window/size/viewport_height=900
+window/size/window_width_override=1440
+window/size/window_height_override=900
+window/stretch/mode="canvas_items"
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false
+environment/defaults/default_clear_color=Color(0.023, 0.035, 0.05, 1)
+
+[editor_plugins]
+enabled=PackedStringArray("res://addons/aero_cloth_3d/plugin.cfg")
+
+[filesystem]
+import/blender/enabled=false
