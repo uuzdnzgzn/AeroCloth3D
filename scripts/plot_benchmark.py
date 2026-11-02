@@ -27,4 +27,7 @@ fig.suptitle("AeroCloth3D 0.1-rebuild · Godot 4.6.3 · container, not target ha
 fig.text(.5, -.02, "Orange: first connection break · Red: final connection detach · 3 characters hit in the same process callback",
          ha="center", fontsize=10)
 for extension in ["png", "svg"]:
-    fig.savefig(root / f"artifacts/frame-times.{extension}", dpi=160, bbox_inches="tight")
+    output = root / f"artifacts/frame-times.{extension}"
+    fig.savefig(output, dpi=160, bbox_inches="tight")
+    if extension == "svg":
+        output.write_text("\n".join(line.rstrip() for line in output.read_text().splitlines()) + "\n")
