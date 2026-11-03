@@ -86,8 +86,9 @@ metadata içe aktar** ile kullanılır. [İş akışı](docs/BLENDER_WORKFLOW.md
   değişirken izlerin görünmesinde kısa gecikme olabilir. Normal detayı shader'da
   üretilir; editörde PNG üretimi korunur.
 - Godot **4.6.3**, Blender **4.3.2** ile test edildi. Hedef 4.7.2 / 5.2.3 doğrulanmadı.
-- Hedef üç karakterle 60 FPS'tir. En düşük donanım belirlenmedi; yazılım renderer
-  ölçümü gerçek GPU onayı değildir.
+- Hedef referans PC Ryzen 5 1600, GTX 1650 4 GB ve 16 GB RAM'dir. Üç karakterle
+  60 FPS çalışma hedefi bu cihazda henüz ölçülmedi; yazılım renderer ölçümü
+  gerçek GPU onayı değildir. Çözünürlük/grafik profili henüz belirlenmedi.
 
 ## Doğrulama
 

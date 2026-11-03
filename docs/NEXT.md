@@ -35,8 +35,10 @@ yeniden kurmak bu aşamanın sonucu değildir; yeni kod ve kanıtlar bu depodad�
 1. **Üretim karakteri:** özgün Cyberstyle arşivi geldiğinde lisans/atıfla ekle;
    mevcut yeni test karakteriyle karıştırma. Yeni iskeletin rest uzayını ve gerçek
    giysi yüzeylerini ölç, anchor'ları yeniden hazırla. Genel otomatik fit vaat etme.
-2. **Hedef cihaz:** kullanıcı hedef FPS ve en düşük CPU/GPU cihazını henüz
-   belirlemedi. Bu bilgiyle gerçek GPU üzerinde üç karakter/darbe ölçümünü tekrarla.
+2. **Hedef cihaz:** Ryzen 5 1600 + GTX 1650 4 GB + 16 GB RAM + SATA SSD
+   kullanıcı tarafından bildirildi. Bu cihazda üç karakter/darbe ölçümünü tekrarla;
+   çözünürlük ve grafik profili belirlenmeli. 60 FPS çalışma hedefi henüz
+   doğrulanmadı; referans cihazı ölçmeden minimum gereksinim ilan etme.
 3. **Temas:** askıda zırhın bedene girişini sınırlayan basit temas; kumaşın gerçek
    bacak/kalça hareketiyle güncellenen proxy'si. Genel kendisiyle çarpışma yok.
 4. **Kumaşa aksesuar:** CPU üçgen/barycentric socket 0.2'de uygulandı. Keyfi

@@ -17,6 +17,21 @@ sınırlar [AUTHORING.md](AUTHORING.md), kullanım README içindedir.
 
 ## Amaç ve araç biçimi
 
+### Kullanıcının bildirdiği hedef PC
+
+- CPU: AMD Ryzen 5 1600, 3.20 GHz, 6 çekirdek.
+- GPU: MSI GeForce GTX 1650 Ventus XS 4G OC, 4 GB GDDR5.
+- RAM: GeIL 16 GB (2×8 GB) DDR4 3000 MHz CL16.
+- Depolama: 256 GB SATA SSD.
+
+Kaynak: kullanıcının paylaştığı donanım siparişi görseli. Ürün başlığında 8 GB,
+ayrıntılı RAM satırında 16 GB yazıyor; çalışma varsayımı ayrıntılı listedeki
+16 GB'dır. Bu cihaz hedef referanstır; henüz doğrulanmış minimum sistem değildir.
+60 FPS çalışma hedefi için toplam kare bütçesi 16,67 ms'dir; giysi sistemi bunun
+yalnız bir kısmını kullanmalıdır. Çözünürlük/grafik profili henüz belirlenmedi.
+Üç karakterin aynı anda darbe/kopma ölçümleri bu donanımda yapılmadı;
+llvmpipe ölçümleri bu cihazın performansı olarak yorumlanmamalıdır.
+
 Hazır karakter, giysi ve animasyonlardan oyun içinde giydirilebilir, hasar
 alabilir ve birlikte davranabilir eşyalar hazırlamak. Aynı varlığın her kullanımını
 elle yeniden ayarlamak gerekmemeli. Hazırlama verisi tekrar kullanılabilir olmalı.
