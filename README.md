@@ -1,5 +1,9 @@
 # AeroCloth3D · Giyilebilir eşya laboratuvarı
 
+Güncel ürün hedefleri ve henüz uygulanmamış hazırlama iş akışı:
+[gereksinimler](docs/REQUIREMENTS.md) · [öncelikler](docs/NEXT.md).
+Üst giysinin alt kumaş hareketini kısıtlayıp kopmada serbest bırakması R05 olarak kayıtlıdır.
+
 Güncel sürüm **0.2-hybrid**: CPU'da 99 fizik noktası, GPU vertex shader'da
 1.353 vertex'li sabit görsel kumaş. Çanta CPU kumaş üçgenine bağlanıp kopabilir.
 Hasar panelinde **Çanta kumaş üçgenini izlesin** seç; Hareket panelinden GPU ve

@@ -1,5 +1,21 @@
 # Kalan işler ve devralma notu
 
+## Güncel ürün hedefi ve öncelik · 2026-11-03
+
+Kullanıcının birleşik iş akışı [REQUIREMENTS.md](REQUIREMENTS.md) içindedir.
+Bu hedefler uygulanmış özellik olarak sunulmamalı. İlk öncelik **R04/R05**:
+üst giysinin alt kumaşın hareketini bölgesel olarak kısıtlaması ve yerel kopmada
+bu etkinin kaldırılması. Görünürlük, temas ve hareket kısıtları ayrı ayarlanmalı.
+Temel serbestlikten etkin giyim/hasar durumuna göre yeniden hesaplama, birden çok
+üst etki, tutarlı uyanma ve Undo/Redo kabul senaryoları belgede tanımlıdır.
+
+Araç hedefi Godot editörü içinde kalıcı hazırlama kaynakları ve Blender aktarımıdır;
+mevcut runtime demo bu tam hazırlama uygulaması değildir. R01–R11 kapsamı ağırlık
+aktarımı/fit önerilerini, morph uyumunu, düşman darbesine göre veriyle ayarlanabilir
+tepkiyi ve üç karakter ölçümünü de içerir.
+
+## Diğer kalan işler
+
 İlk hazırlanmış hasar senaryosu karakter üzerinde çalışır. Bütün eski sürümü
 yeniden kurmak bu aşamanın sonucu değildir; yeni kod ve kanıtlar bu depodadır.
 
