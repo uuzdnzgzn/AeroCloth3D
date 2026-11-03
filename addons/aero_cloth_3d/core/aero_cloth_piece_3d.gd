@@ -1,3 +1,4 @@
+@tool
 class_name AeroClothPiece3D
 extends Node3D
 ## Prepared wearable: animation -> one-point swing (two links) -> pooled rigid body.

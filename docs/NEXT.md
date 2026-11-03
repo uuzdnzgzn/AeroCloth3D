@@ -1,5 +1,18 @@
 # Kalan işler ve devralma notu
 
+## 0.3 sonrası
+
+Godot authoring/main-screen, harita/aşama/timeline, runtime hit adapteri ve
+R05 örneği uygulandı. Önce [AUTHORING.md](AUTHORING.md) ve güncel test/ölçümleri
+oku; aşağıdaki 2026-11-03 başlangıç öncelikleri tarihsel kayıttır.
+
+Üretim öncelikleri: hedef CPU/GPU'da 60 FPS profili ve maske yayın gecikmesi;
+4 bölgelik önbellek sınırının büyük varlıklarda ölçülü genişletilmesi; daha
+iyi temas/bükülme, karmaşık iskelet/fit kombinasyonları; gölge/uzak mesafe
+görsel kabul matrisi. Serbest kesme, tam kendisiyle çarpışma, canlı Blender
+köprüsü ve aksesuar kütlesi geri beslemesi hâlâ yoktur. GPU compute'a geçiş
+yalnız gerçek profiler gerekçesiyle yapılmalıdır.
+
 ## Güncel ürün hedefi ve öncelik · 2026-11-03
 
 Kullanıcının birleşik iş akışı [REQUIREMENTS.md](REQUIREMENTS.md) içindedir.

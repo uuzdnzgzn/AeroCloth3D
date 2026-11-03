@@ -4,6 +4,17 @@ Güncelleme: 2026-11-03. Bu belge kullanıcının oyun ve hazırlama aracı hede
 toplar. Bir gereksinimin burada bulunması uygulanmış olduğu anlamına gelmez.
 Mevcut 0.2 prototipi için HYBRID.md ve VERIFICATION.md geçerlidir.
 
+## 0.3 uygulama durumu
+
+Godot ana ekran eklentisi, kalıcı kaynaklar, bölgesel hasar aşamaları, 3D/UV
+harita üretimi, aşamaya özel tarifler, animasyon/darbe zaman çizgisi ve oyun
+adapteri uygulandı. R05 temel→etkin hareket, iki kısıtlayıcı ve kopmada
+serbestleşme örnekle doğrulanıyor. Blender'da kopyada ağırlık, UV2 ve sınırlı
+rest-pose fit yardımcıları; GLB/UUID/hash metadata aktarımı bulunuyor.
+Sınırlı beden/gömlek morph örneği ve hazırlanmış fiziksel yırtık vardır.
+Aşağıdaki eski durum tablosu 0.2 başlangıcını kaydeder; güncel kapsam ve
+sınırlar [AUTHORING.md](AUTHORING.md), kullanım README içindedir.
+
 ## Amaç ve araç biçimi
 
 Hazır karakter, giysi ve animasyonlardan oyun içinde giydirilebilir, hasar

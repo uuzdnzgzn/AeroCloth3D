@@ -1,3 +1,4 @@
+@tool
 class_name AeroClothSurfaceSocket3D
 extends Node3D
 ## One-way attachment frame from an authoritative CPU proxy triangle.

@@ -1,5 +1,9 @@
 # Doğrulama · 2026-11-02
 
+0.3 Authoring testleri ve güncel kapsam [AUTHORING.md](AUTHORING.md) içindedir.
+Buradaki 0.2/0.1 sayıları eski sürümlerin kaydıdır; yeni sürüm sayısı olarak
+sunulmamalıdır. Ham son test logları artifacts/validation-*.log olarak üretilir.
+
 **0.2-hybrid güncellemesi:** mevcut 205 kontrol + 15 hibrit, 53 yüzey socket ve
 2 ek profil kontrolü = **275 kontrol geçti**. Gerçek shader/CPU render silueti karşılaştırması
 da geçti. Güncel kapsam ve sınırlar [HYBRID.md](HYBRID.md) dosyasında.

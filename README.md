@@ -1,86 +1,102 @@
-# AeroCloth3D · Giyilebilir eşya laboratuvarı
+# AeroCloth3D · 0.3 Authoring
 
-Güncel ürün hedefleri ve henüz uygulanmamış hazırlama iş akışı:
-[gereksinimler](docs/REQUIREMENTS.md) · [öncelikler](docs/NEXT.md).
-Üst giysinin alt kumaş hareketini kısıtlayıp kopmada serbest bırakması R05 olarak kayıtlıdır.
+Blender'da hazırlanmış karakter ve giysiler için **Godot editörü içinde** hasar,
+katman ve hareket hazırlama eklentisi. Ayrı uygulama kurmak gerekmez. F5 ile açılan
+çalışma sahnesi ayrıca test/önizleme istemcisidir.
 
-Güncel sürüm **0.2-hybrid**: CPU'da 99 fizik noktası, GPU vertex shader'da
-1.353 vertex'li sabit görsel kumaş. Çanta CPU kumaş üçgenine bağlanıp kopabilir.
-Hasar panelinde **Çanta kumaş üçgenini izlesin** seç; Hareket panelinden GPU ve
-CPU referans yollarını karşılaştır. [Teknik açıklama ve doğrulama](docs/HYBRID.md).
+![Godot hazırlama ekranı](artifacts/authoring-workspace.png)
 
-Boş depodan yeniden kurulan **0.1-rebuild prototipi temelinde**. Önceki 0.9 sürümünün
-kurtarıldığı anlamına gelmez. Animasyonlu gerçek bir iskelet/mesh üzerinde,
-hazırlanmış bağlantı kopması ve alt katmanın geri açılması gösterilir.
+## Başlangıç
 
-![Karakter üzerinde tek bağlantıda kalan omuz zırhı](artifacts/lab-hanging.png)
+1. `project.godot` dosyasını açıp GLB importunun bitmesini bekle.
+2. Üst ana ekranlardan **AeroCloth3D**'yi seç. Alternatif: Project → Tools →
+   **AeroCloth3D · Open Authoring**. Bu işlem oyunu başlatmaz.
+3. **Örnek** ile karakter, alt kumaş, üst parça, ikinci kısıtlayıcı, zırh ve çantayı yükle.
+4. Parça/bölge seç. **Haritalar** bölümünde 3D yüzeye veya UV görünümüne boya.
+   Kesik, aşınma, yanık, kan, ezik; silgi, yumuşatma, büyütme/küçültme vardır.
+5. **Seçili aşamaya özel harita** ile her aşamaya ek izler hazırla. Aşama listesi
+   düzenlenen kaynağı, önizleme satırı simüle edilen hasarı gösterir.
+6. **Aşamalar** bölümünde eşik, alpha/normal/PBR etkisi, kopacak bağlantılar ve
+   hazırlanmış model varyantını ayarla. Sonraki aşamalar önceki haritaları içerir.
+7. **Katmanlar** bölümünde üst→alt bölge, hareket sınırı, örtme ve son etkin
+   aşamayı düzenle. Üst parça kopunca kalan etkileyicilerin kısıtları korunur.
+8. Animasyon oynat; zaman çizgisine darbe ekle veya 3D görünümde darbe dene.
+   Geri sarma, başlangıçtan sabit adımla tekrar simüle eder.
+9. **Kaydet** hazırlığı `.tres` olarak saklar. **Oyun sahnesi üret**, editör
+   bağımlılığı olmayan `AeroWearableRig` sahnesini oluşturur.
 
-## Çalıştırma
+Yeni varlıklarda önce **Karakter GLB seç**, ardından **Giysi GLB / sahne ekle**.
+**Hazırlama** bölümünde gerçek mesh'i, hareket türünü, kemiği ve gerektiğinde
+proxy mesh'i seç. Skinned giysi iskelete, cloth hazırlanmış üçgen proxy'ye,
+rigid parça bağlantılara bağlanır. Kaynaklar Inspector'da da düzenlenebilir.
 
-1. Godot ile `project.godot` dosyasını aç; GLB importunun tamamlanmasını bekle.
-2. F6 ile `demo/CharacterWardrobe.tscn` sahnesini veya F5 ile projeyi çalıştır.
-   Eklenti menüsü: **Project → Tools → AeroCloth3D · Open Character Lab**.
-3. Omuz zırhını seç, **Hasar → Seçili parçaya darbe** düğmesine iki kez bas.
-4. İlk darbede tek bağlantıda sarkar ve iç omuz görünür. İkinci darbede düşer.
-5. Çanta için takip / ana parça düşünce ayrılma seç; istersen çantaya ayrıca vur.
-6. **Sıfırla** giysileri onarır ve animasyonu başa alır; hazırlama ayarları korunur.
+## Oyuna bağlama
 
-Sağ tuş sürükleme kamerayı döndürür; tekerlek yaklaşır. **Odakla** seçili bölgeyi
-yakın gösterir. **Hareket** bölümünde bir veya üç karakterle deneyebilirsin.
-Duraklat, animasyonu durdurur; fizik devam eder.
+Savaş sistemi isabet/engelleme kararını verdikten sonra:
 
-**Hazırlama** bölümünde bağlantıların X/Y/Z konumları ve alt bölge ilişkisi
-değişir. **Ayarı kaydet**, bağlantıları, kumaş boyamasını ve aksesuar kuralını
-Godot kullanıcı klasöründeki `wearable-profile.json` dosyasına yazar. Dosya yolu
-durum satırında gösterilir. Kaydı yüklemek hasarı onarmaz.
+```gdscript
+@onready var wearables: AeroWearableRig = $WearableCharacter
 
-**Boyama → Sarkan kumaş**: sabit / kısmi / serbest seçip sol tuşla boya.
-Bir fırça hareketi tek Undo adımıdır. Geri al / Yinele, Ctrl+Z / Ctrl+Y çalışır.
-Giysi çıkarıp takma, bağlantı düzenleme ve hasar da geri alınabilir.
+func equipment_hit(hit_id: String, point: Vector3, direction: Vector3) -> void:
+    var result = wearables.apply_hit({
+        "hit_id": hit_id, "position": point, "direction": direction,
+        "type": "slash", "amount": 15.0, "impulse": direction * 0.4
+    })
+    if not result.accepted:
+        print(result.reason)
+```
 
-## Doğrulanan kapsam
+Rig, dünya temasını CPU yüzeyinden giysi/bölge/UV'ye eşler. Hazır eşleme varsa
+`item_id`, `region_id`, `uv` doğrudan verilebilir. Sinyaller aşamaları ilerletmek
+zorunda değildir; sonucu bildirir:
 
-- 20 kemikli yeni test karakteri; Idle ve Walk döngüleri.
-- Vücuda yakın bölgesel iç katman, göğüslük, iki bağlantılı omuz zırhı,
-  99 noktalı CPU kumaş parçası, bağımsız bağlantılı çanta.
-- Animasyon kemiğine bağlı zırh, kalan bağlantıda kontrollü sarkma,
-  son bağlantıda önceden hazırlanmış RigidBody3D ile zemine düşüş.
-- Hasarın eşya üzerinde korunması; kesin örtülen iç bölgelerin görünürlük
-  kontrolü; gizli karakterlerin ve çıkarılan kumaşın hesaplamasının durması.
-- Seçime göre araçlar, giysi çıkarma/takma, bağlantı noktaları, yüzey/kenar/vertex,
-  boyama, Undo/Redo, ayar dosyası ve üç karakter için ölçüm.
+```gdscript
+wearables.controller.stage_changed.connect(on_stage_changed)
+wearables.controller.attachment_broken.connect(on_attachment_broken)
+var save_data = wearables.save_runtime_state()
+var restored = wearables.load_runtime_state(save_data)
+```
 
-Bu, keyfi varlıkları otomatik hazırlayan tam bir giysi editörü değildir.
-Kumaş çözümü ve askıda zırh hareketi prototiptir. Askıdaki zırh ve çanta karakteri
-geri itmez. Genel beden/giysi teması, kumaştan serbest kesme, morph zinciri,
-Blender eklentisi ve çantanın ağırlığının kumaşı çekmesi
-henüz uygulanmadı. Blender'ın yerine modelleme/rig aracı kurulmadı.
+Hazırlama kaydı ile oyun hasarı ayrıdır. Çıkarıp takmak hasarı onarmaz. Tam
+runtime kaydı hasar, maskeler, fizik ve animasyonu taşır; yükleme kırılma
+ses/efekt sinyallerini tekrar üretmez.
 
-## Sürümler ve varlıklar
+## Blender
 
-**Test edilen:** Godot 4.6.3, Blender 4.3.2. Kullanıcının hedefi Godot 4.7.2 ve
-Blender 5.2.3; bu hedef sürümler burada çalıştırılmadı.
+`blender_addon/aerocloth_export` Blender eklentisidir. Orijinallere dokunmadan
+kopyada ağırlık aktarımı, UV2 üretimi ve sınırlı rest-pose fit önerisi sağlar.
+GLB + UUID/bölge/rig/morph/hash metadata'sı dışa aktarır. Godot'ta **Blender
+metadata içe aktar** ile kullanılır. [İş akışı](docs/BLENDER_WORKFLOW.md).
 
-Özgün Cyberstyle arşivi bu ortamda bulunamadı. Gösterilen karakter yeni üretilmiş
-bir test varlığıdır; özgün karakter değildir. Düzenlenebilir `.blend`, `.glb`,
-Python üreticisi ve [kaynak/lisans bilgileri](demo/assets/recovery_character/README.md)
-pakete dahildir. Doğrudan `.blend` importu kapalı; Godot GLB kullanır.
+## Sınırlar
 
-## Test ve ölçüm
+- Fiziksel yırtık ve model değişimi hazırlanmış varlık gerektirir. Alpha deliği
+  tek başına fizik kesmez; serbest kesme/kendisiyle çarpışma yoktur.
+- Çanta yüzeyi izler ve kopabilir; ağırlığı kumaşı geri çekmez.
+- Mesh başına en fazla 4 bölgenin görünürlük durumları önceden hazırlanır.
+  Karmaşık giysi bu sürümde anlamlı hazırlanmış parçalara ayrılmalıdır.
+- Shader 16 bölgesel materyal çarpanı destekler. İndeks gizlemek tüm skinning
+  maliyetini kaldırmaz; proxy'nin ilk bağlanması hazırlama işlemi olarak pahalı olabilir.
+- Kaynak StandardMaterial3D PBR girişleri aktarılır; özel shader'lar adaptasyon gerektirir.
+- Ağırlık/fit önerileri düzeltmenin yerine geçmez. Başlangıçta aynı karaktere
+  hazırlanmış varlıklarla çalışılır; farklı bedenlere kusursuz otomatik uyum yoktur.
+- Hızlı seek sırasında kopan rigid parça kontrollü zemin düşüşü kullanır;
+  oyunda Godot fizik dünyasıyla çarpışır.
+- Oyun sırasında kozmetik maskeler işçi thread'inde hazırlanır; mantık/fizik hemen
+  değişirken izlerin görünmesinde kısa gecikme olabilir. Normal detayı shader'da
+  üretilir; editörde PNG üretimi korunur.
+- Godot **4.6.3**, Blender **4.3.2** ile test edildi. Hedef 4.7.2 / 5.2.3 doğrulanmadı.
+- Hedef üç karakterle 60 FPS'tir. En düşük donanım belirlenmedi; yazılım renderer
+  ölçümü gerçek GPU onayı değildir.
+
+## Doğrulama
 
 ```bash
 bash scripts/validate.sh
-bash scripts/benchmark.sh headless
-bash scripts/benchmark.sh rendered
+DISPLAY=:99 bash scripts/validate_render.sh  # çalışan grafik oturumu gerekir
+blender --background --python-exit-code 1 --python scripts/test_blender_bridge.py
 python3 scripts/package.py
 ```
 
-`GODOT_BIN` ile farklı Godot çalıştırılabilir dosyası seçilebilir. Render testi
-masaüstü/X11 oturumu ister. Her rapor 120 kare ısıtma sonrası 600 kare kaydeder;
-üç tur ilk kopma + düşme, olaydan önce iki ve sonra beş kareyi ayrı saklar.
-
-Kararlar: [mimari](docs/ARCHITECTURE.md) · [kurtarma kaydı](docs/RECOVERY.md) ·
-[doğrulama](docs/VERIFICATION.md) · [ölçümler](docs/PERFORMANCE.md) · [kalan işler](docs/NEXT.md).
-
-Görseller: [sağlam](artifacts/lab-intact.png) · [tek bağlantı](artifacts/lab-hanging.png) ·
-[kopmuş](artifacts/lab-detached.png) · [üç karakter](artifacts/lab-three.png).
+[Uygulama ve test kaydı](docs/AUTHORING.md) · [gereksinimler](docs/REQUIREMENTS.md) ·
+[kurtarma geçmişi](docs/RECOVERY.md) · [önceki hibrit prototip](docs/HYBRID.md).

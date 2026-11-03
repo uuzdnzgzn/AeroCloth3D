@@ -3,7 +3,7 @@ config_version=5
 
 [application]
 config/name="AeroCloth3D · Wearable Lab"
-run/main_scene="res://demo/CharacterWardrobe.tscn"
+run/main_scene="res://demo/AuthoringLab.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 
 [display]

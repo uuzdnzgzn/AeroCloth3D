@@ -2,3 +2,5 @@
 artifacts/*.zip
 artifacts/*.log
 *.tmp
+__pycache__/
+*.pyc
