@@ -289,6 +289,10 @@ func _apply_operation(operation: Dictionary) -> void:
 		for x: int in range(first.x, last.x):
 			var delta: Vector2 = (Vector2(x + 0.5, y + 0.5) / float(size) - uv) / radius
 			var q: Vector2 = Vector2(cosine * delta.x + sine * delta.y, -sine * delta.x + cosine * delta.y)
+			# Cut width is bounded by 0.185. Outside this strip the original
+			# ellipse influence is exactly zero, so avoid hashing and pixel work.
+			if brush == &"cut" and (absf(q.x) >= 1.0 or absf(q.y) >= 0.185):
+				continue
 			var distance: float = q.length()
 			var influence: float = 0.0
 			if brush == &"cut":
