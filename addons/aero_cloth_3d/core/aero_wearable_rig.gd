@@ -429,6 +429,7 @@ func _sync_canvas(slot: Dictionary, recipes: Array, stamps: Array, force_sync: b
 		return
 	# Reset/import/editor work publishes synchronously and invalidates any older job.
 	if slot["mask_task"]>=0 or not slot["mask_requested"].is_empty():
+		if slot["mask_task"]>=0: slot["mask_job"].request_cancel()
 		slot["mask_generation"]+=1
 		slot["mask_requested"]={}
 	var old_recipes: Array = slot["applied_recipes"]
@@ -459,6 +460,7 @@ func _request_mask_job(slot: Dictionary, recipes: Array, stamps: Array) -> void:
 	var requested: Dictionary=slot["mask_requested"]
 	if requested.is_empty() and recipes==slot["applied_recipes"] and stamps==slot["applied_stamps"]: return
 	if requested.is_empty() or requested["recipes"]!=recipes or requested["stamps"]!=stamps:
+		if slot["mask_task"]>=0: slot["mask_job"].request_cancel()
 		slot["mask_generation"]+=1
 		slot["mask_requested"]={"generation":slot["mask_generation"],"recipes":recipes.duplicate(true),"stamps":stamps.duplicate(true)}
 	if slot["mask_task"]<0 and slot["mask_generation"]!=slot["mask_published_generation"] and slot["mask_failed_generation"]!=slot["mask_generation"]: _start_mask_job(slot)

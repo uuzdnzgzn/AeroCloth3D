@@ -12,6 +12,8 @@ var incremental: bool = false
 var first_recipe: int = 0
 var first_stamp: int = 0
 var checkpoint: Dictionary = {}
+var _cancel_mutex := Mutex.new()
+var _cancel_requested := false
 var _orphan_id: int = -1
 var _orphan_tree: SceneTree
 
@@ -27,6 +29,7 @@ func configure(snapshot: Dictionary, size: int) -> void:
 	checkpoint=snapshot.get("checkpoint",{})
 
 func run() -> void:
+	if _stop_if_cancelled(): return
 	var canvas: RefCounted=Canvas.new()
 	canvas.cpu_only=true
 	canvas.gpu_normal_preview=true
@@ -49,6 +52,7 @@ func run() -> void:
 			result={"error":"Invalid authored recipe"}
 			return
 		for source in recipe["operations"]:
+			if _stop_if_cancelled(): return
 			if not source is Dictionary:
 				result={"error":"Invalid authored operation"}
 				return
@@ -61,18 +65,33 @@ func run() -> void:
 				result={"error":"Authored operation limit exceeded"}
 				return
 	for stamp_index in range(first_stamp,stamps.size()):
+		if _stop_if_cancelled(): return
 		var stamp: Dictionary=stamps[stamp_index]
 		var type_value: String=str(stamp.get("type","cut"))
 		var kind: StringName=&"cut" if type_value in ["slash","cut","pierce"] else (&"burn" if type_value in ["burn","fire"] else (&"wear" if type_value in ["wear","abrasion"] else (&"blood" if type_value=="blood" else &"dent")))
 		if not canvas.stamp(stamp["uv"],kind,.045+minf(float(stamp.get("amount",10)),80)*.001,.95,float(stamp.get("angle",0)),int(stamp.get("seed",0))):
 			result={"error":"Runtime operation limit exceeded"}
 			return
+	if _stop_if_cancelled(): return
 	canvas.flush()
 	result=canvas.export_cpu_result()
+
+func request_cancel() -> void:
+	_cancel_mutex.lock()
+	_cancel_requested = true
+	_cancel_mutex.unlock()
+
+func _stop_if_cancelled() -> bool:
+	_cancel_mutex.lock()
+	var cancelled := _cancel_requested
+	_cancel_mutex.unlock()
+	if cancelled: result={"cancelled":true}
+	return cancelled
 
 func orphan_task(task_id: int, tree: SceneTree) -> void:
 	# Scene unload never waits on painting. A RefCounted main-loop reaper owns the
 	# finished task until it can release WorkerThreadPool bookkeeping without blocking.
+	request_cancel()
 	_orphan_id=task_id
 	_orphan_tree=tree
 	if not tree.process_frame.is_connected(_poll_orphan): tree.process_frame.connect(_poll_orphan)

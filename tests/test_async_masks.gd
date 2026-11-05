@@ -3,6 +3,7 @@ const Rig = preload("res://addons/aero_cloth_3d/core/aero_wearable_rig.gd")
 const Factory = preload("res://addons/aero_cloth_3d/core/aero_example_factory.gd")
 const Outfit = preload("res://addons/aero_cloth_3d/resources/aero_outfit.gd")
 const Definition = preload("res://addons/aero_cloth_3d/resources/aero_wearable_definition.gd")
+const MaskJob = preload("res://addons/aero_cloth_3d/core/aero_mask_job.gd")
 var checks: int = 0
 var failures: Array[String] = []
 var rigs: Array[Node3D] = []
@@ -31,6 +32,22 @@ func settle(rig: Node3D) -> bool:
 	while busy(rig) and Time.get_ticks_usec()<deadline: await process_frame
 	return not busy(rig)
 func run() -> void:
+	var cancelled_job: RefCounted=MaskJob.new()
+	cancelled_job.configure({"generation":1,"recipes":[],"stamps":[]},512)
+	cancelled_job.request_cancel()
+	cancelled_job.run()
+	expect(cancelled_job.result.get("cancelled",false) and not cancelled_job.result.has("image"),"Cancelled worker stops before allocating or publishing images")
+	var queued_job: RefCounted=MaskJob.new()
+	var queued_stamps: Array = []
+	for index in range(40): queued_stamps.append({"uv":Vector2(.5,.5),"type":"cut","amount":30,"seed":index})
+	queued_job.configure({"generation":2,"recipes":[],"stamps":queued_stamps},512)
+	var task: int=WorkerThreadPool.add_task(queued_job.run)
+	queued_job.request_cancel()
+	var cancel_deadline: int=Time.get_ticks_usec()+3000000
+	while not WorkerThreadPool.is_task_completed(task) and Time.get_ticks_usec()<cancel_deadline: await process_frame
+	var cancellation_finished: bool=WorkerThreadPool.is_task_completed(task)
+	if cancellation_finished: WorkerThreadPool.wait_for_task_completion(task)
+	expect(cancellation_finished and queued_job.result.get("cancelled",false) and not queued_job.result.has("image"),"WorkerThreadPool cancellation ends obsolete work without producing publishable images")
 	var recipe: Resource=Factory.create()
 	var rig: Node3D=make_rig(recipe)
 	var reference: Node3D=make_rig(recipe,true)
@@ -87,7 +104,8 @@ func run() -> void:
 	rig.reset_preview()
 	expect(slot["applied_stamps"].is_empty() and rig.slots[&"shirt"]["applied_stamps"].is_empty(),"Reset publishes the initial recipe synchronously even while painting is in flight")
 	expect(await settle(rig) and rig.controller.get_item_state(&"shirt")["regions"][&"upper"]["damage"]==0.0,"Reset cancels cosmetic generations while preserving repaired gameplay state")
-	expect(slot["canvas"].get_coverage(Vector2(.45,.35)).r==0.0 and reset_job.result["image"].get_pixel(int(.45*512),int(.35*512)).r>0.0 and reset_job.result["image"].get_instance_id()!=slot["canvas"].image.get_instance_id(),"Main-thread reset cannot alter the worker checkpoint or be repainted by its discarded result")
+	var reset_private: bool = reset_job.result.get("cancelled",false) or (reset_job.result.has("image") and reset_job.result["image"].get_pixel(int(.45*512),int(.35*512)).r>0.0 and reset_job.result["image"].get_instance_id()!=slot["canvas"].image.get_instance_id())
+	expect(slot["canvas"].get_coverage(Vector2(.45,.35)).r==0.0 and reset_private,"Reset cancels obsolete work or discards its independent result without repainting")
 	# Exercise the actual six-contact workload without timing assertions tied to hardware.
 	var group: Array[Node3D]=[rig,make_rig(recipe),make_rig(recipe)]
 	var begin: int=Time.get_ticks_usec()
