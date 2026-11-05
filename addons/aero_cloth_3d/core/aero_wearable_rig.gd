@@ -139,6 +139,7 @@ func _add_item(definition: Resource) -> void:
 		var bone := BoneAttachment3D.new()
 		bone.bone_name = definition.anchor_bone
 		skeleton.add_child(bone)
+		bone.transform = skeleton.get_bone_global_pose(skeleton.find_bone(definition.anchor_bone))
 		bone.add_child(anchor)
 		anchor.global_transform = global_transform * definition.bind_transform
 	else:
@@ -380,7 +381,9 @@ func _sync_state(_id: StringName = &"") -> void:
 			for index in desired_broken:
 				if index < piece.broken_connections.size() and not piece.broken_connections[index]: piece.apply_hit(index, slot.get("last_impulse",Vector3(0.05,0.02,0.08)))
 			if not was_detached and piece.state == Piece.State.DETACHED:
-				slot["preview_velocity"] = slot.get("last_impulse",Vector3(0.05,0.02,0.08))/piece.rigid_body.mass
+				# Use the same release velocity as gameplay, including animated and
+				# hanging motion, rather than restarting from the hit impulse alone.
+				slot["preview_velocity"] = piece.rigid_body.linear_velocity
 			piece.rigid_body.freeze = manual_simulation or not state["equipped"] or piece.state != Piece.State.DETACHED
 			if piece_repair: slot["preview_velocity"] = Vector3.ZERO
 		var cache_key: String = str(slot["variant"]) + ":" + str(hidden_mask)
@@ -569,22 +572,41 @@ func meshes(root_node: Node) -> Array[MeshInstance3D]:
 	for child in root_node.get_children(): result.append_array(meshes(child))
 	return result
 
+func _update_skeleton_pose() -> void:
+	if skeleton == null: return
+	skeleton.force_update_all_bone_transforms()
+	# Manual seek/step must expose the new anchors immediately, without waiting
+	# for the deferred skeleton_updated notification at the end of the frame.
+	for slot in slots.values():
+		var bone: Node = slot["anchor"].get_parent()
+		if bone is BoneAttachment3D and bone.get_parent() == skeleton:
+			var index: int = skeleton.find_bone(bone.bone_name)
+			if index >= 0: bone.transform = skeleton.get_bone_global_pose(index)
+
 func play_animation(name_value: String) -> void:
 	animation_name = name_value
 	animation_time = 0.0
 	if animation and animation.has_animation(name_value):
 		animation.play(name_value)
 		animation.seek(0,true)
-		if skeleton: skeleton.force_update_all_bone_transforms()
+		_update_skeleton_pose()
 
 func _physics_process(delta: float) -> void:
 	if simulation_running and not manual_simulation: step(delta)
+
+func _refresh_surface_attachment(slot: Dictionary) -> void:
+	var attach := StringName(slot["definition"].metadata.get("attach_item",""))
+	if attach == &"" or not slots.has(attach) or not slots[attach]["surface"]: return
+	var source: Node3D = slots[attach]["surface"]
+	var pose: Transform3D = source.get_surface_sample(slot["definition"].metadata.get("triangle",Vector3i(0,1,2)),slot["definition"].metadata.get("barycentric",Vector3(0.3,0.3,0.4)))
+	pose.origin += pose.basis.z * 0.04
+	slot["anchor"].global_transform = pose
 
 func step(delta: float) -> void:
 	if animation:
 		animation.advance(delta)
 		animation_time += delta
-		if skeleton: skeleton.force_update_all_bone_transforms()
+		_update_skeleton_pose()
 	var body_spheres: Array[Vector4] = BodyCollision.sample(outfit.metadata.get("body_colliders",[]),skeleton,global_transform)
 	# CPU proxies update before attachments irrespective of outfit list order.
 	for id in slots:
@@ -601,11 +623,7 @@ func step(delta: float) -> void:
 		var attach: StringName = StringName(slot["definition"].metadata.get("attach_item",""))
 		if attach != &"" and slots.has(attach):
 			equipped = equipped and controller.get_item_state(attach).get("equipped",false)
-			if slots[attach]["surface"]:
-				var source: Node3D = slots[attach]["surface"]
-				var pose: Transform3D = source.get_surface_sample(slot["definition"].metadata.get("triangle",Vector3i(0,1,2)),slot["definition"].metadata.get("barycentric",Vector3(0.3,0.3,0.4)))
-				pose.origin += pose.basis.z * 0.04
-				slot["anchor"].global_transform = pose
+			_refresh_surface_attachment(slot)
 		piece.get_visual_root().visible = equipped
 		if not equipped:
 			piece.rigid_body.freeze = true
@@ -620,7 +638,12 @@ func step(delta: float) -> void:
 				if next_position.y < 0.06:
 					next_position.y = 0.06
 					velocity = Vector3.ZERO
+					piece.rigid_body.angular_velocity = Vector3.ZERO
+				var angular_velocity: Vector3 = piece.rigid_body.angular_velocity
+				if angular_velocity.length_squared() > 0.000001:
+					piece.rigid_body.global_basis = Basis(angular_velocity.normalized(), angular_velocity.length() * delta) * piece.rigid_body.global_basis
 				piece.rigid_body.global_position = next_position
+				piece.rigid_body.linear_velocity = velocity
 				slot["preview_velocity"] = velocity
 
 func reset_preview() -> void:
@@ -658,7 +681,7 @@ func _vectors_array(values: PackedVector3Array) -> Array:
 
 func _encode_piece(data: Dictionary) -> Dictionary:
 	var result: Dictionary = data.duplicate(true)
-	for key in ["linear_velocity","angular_velocity","stored_linear_velocity","stored_angular_velocity"]: result[key] = _vector_array(data[key])
+	for key in ["linear_velocity","angular_velocity","stored_linear_velocity","stored_angular_velocity","anchor_velocity","anchor_angular_velocity"]: result[key] = _vector_array(data[key])
 	for key in ["swing","swing_velocity"]: result[key] = [data[key].x,data[key].y]
 	result["connection_points"] = _vectors_array(PackedVector3Array(data["connection_points"]))
 	var pose: Transform3D = data["transform"]
@@ -683,6 +706,13 @@ func _decode_piece(data: Dictionary, piece: Node3D) -> Dictionary:
 		if typeof(broken) != TYPE_BOOL: return {}
 	for key in ["linear_velocity","angular_velocity","stored_linear_velocity","stored_angular_velocity"]:
 		if not _valid_vector(data.get(key),3): return {}
+		result[key] = Vector3(data[key][0],data[key][1],data[key][2])
+	# Optional in version-one saves written before release continuity support.
+	for key in ["anchor_velocity","anchor_angular_velocity"]:
+		if not data.has(key):
+			result[key] = Vector3.ZERO
+			continue
+		if not _valid_vector(data[key],3): return {}
 		result[key] = Vector3(data[key][0],data[key][1],data[key][2])
 	for key in ["swing","swing_velocity"]:
 		if not _valid_vector(data.get(key),2): return {}
@@ -772,7 +802,7 @@ func load_runtime_state(data: Dictionary) -> bool:
 	animation_time = float(animation_data["time"])
 	if animation:
 		animation.seek(animation_time,true)
-		if skeleton: skeleton.force_update_all_bone_transforms()
+		_update_skeleton_pose()
 	_loading_state = true
 	_sync_state()
 	for id in slots:
@@ -780,7 +810,13 @@ func load_runtime_state(data: Dictionary) -> bool:
 		var item: Dictionary = decoded[id]
 		slot["preview_velocity"] = item["preview_velocity"]
 		if slot["surface"]: slot["surface"].restore(item["surface"])
+	# All parent surfaces must be restored before attached pieces consume their
+	# anchors, including paused loads where no physics step will follow.
+	for id in slots:
+		var slot: Dictionary = slots[id]
+		var item: Dictionary = decoded[id]
 		if slot["piece"]:
+			_refresh_surface_attachment(slot)
 			slot["piece"].restore(item["piece"])
 			if manual_simulation: slot["piece"].rigid_body.freeze = true
 	simulation_running = animation_data["running"]

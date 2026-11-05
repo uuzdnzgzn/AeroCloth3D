@@ -178,6 +178,32 @@ func run() -> void:
 		equipped.button_pressed = true
 		expect(state_region(&"shirt", &"upper") == damaged_region, "Actual checkbox re-equips without resetting item damage")
 	expect(item.damage_recipe == authored_after_edit, "Runtime hits and equipment changes do not mutate the authored brush recipe")
+	# Attachment authoring uses the same 1-based labels as placement, with no
+	# free-form indices that can silently target a missing connection.
+	lab.select_item(&"jacket")
+	lab.selected_tab = 2
+	lab._choose_stage(2)
+	var attachment_stage: Resource = lab._region().stages[2]
+	var first_connection: CheckButton = lab.tools.get_node_or_null("StageConnection0")
+	var second_connection: CheckButton = lab.tools.get_node_or_null("StageConnection1")
+	expect(first_connection != null and second_connection != null and not first_connection.button_pressed and not second_connection.button_pressed, "Stage editor offers exactly the two real jacket connections")
+	if first_connection != null and second_connection != null:
+		var connection_version: int = lab.local_history.get_version()
+		first_connection.button_pressed = true
+		await settle()
+		expect(attachment_stage.broken_connections == PackedInt32Array([0]) and lab.local_history.get_version() == connection_version + 1, "Connection checkbox writes one valid break as one Undo action")
+		expect(lab.rig.slots[&"jacket"]["piece"].state == 1 and lab.tools.get_node("StageConnection0").button_pressed, "Authored connection break immediately previews the hanging state")
+		lab._undo()
+		await settle()
+		expect(attachment_stage.broken_connections.is_empty() and lab.rig.slots[&"jacket"]["piece"].state == 0, "Undo repairs the connection and restores the attached preview")
+		lab._redo()
+		await settle()
+		expect(attachment_stage.broken_connections == PackedInt32Array([0]) and lab.rig.slots[&"jacket"]["piece"].state == 1, "Redo restores both connection authoring and hanging preview")
+		var valid_version: int = lab.local_history.get_version()
+		lab._set_stage_connection(lab._item(),attachment_stage,2,true)
+		expect(lab.local_history.get_version() == valid_version and attachment_stage.broken_connections == PackedInt32Array([0]), "Missing connection indices cannot alter authoring or Undo history")
+		lab._undo()
+		await settle()
 	# Fixed-step timeline replay is deterministic and layers recompute from all
 	# equipped sources; jacket release leaves the independent harness cap active.
 	lab.select_item(&"jacket")

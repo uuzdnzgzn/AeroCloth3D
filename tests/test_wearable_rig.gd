@@ -11,6 +11,20 @@ func expect(condition: bool, description: String) -> void:
 	if not condition:
 		failures.append(description)
 		push_error(description)
+func state_close(a: Variant, b: Variant) -> bool:
+	if typeof(a) in [TYPE_FLOAT,TYPE_INT] and typeof(b) in [TYPE_FLOAT,TYPE_INT]:
+		return absf(float(a)-float(b)) < 0.000001
+	if a is Dictionary and b is Dictionary:
+		if a.size() != b.size(): return false
+		for key in a:
+			if not b.has(key) or not state_close(a[key],b[key]): return false
+		return true
+	if a is Array and b is Array:
+		if a.size() != b.size(): return false
+		for index in range(a.size()):
+			if not state_close(a[index],b[index]): return false
+		return true
+	return a == b
 func event(item: StringName, region: StringName, amount: float, id: String) -> Dictionary:
 	return {"item_id":item,"region_id":region,"amount":amount,"hit_id":id,"type":"cut","uv":Vector2(.45,.35),"seed":19}
 func mesh_indices(mesh: Mesh) -> int:
@@ -108,6 +122,14 @@ func run() -> void:
 	expect(shirt["variant"]==stage4_key,"Repairing a second region keeps the first region's stronger variant")
 	controller.set_preview_stage(&"jacket",&"body",4)
 	expect(jacket_piece.state==Piece.State.DETACHED, "Stage four releases the prepared rigid body")
+	expect(rig.slots[&"jacket"]["preview_velocity"].is_equal_approx(jacket_piece.rigid_body.linear_velocity), "Editor release inherits gameplay velocity including hanging motion")
+	var release_basis: Basis = jacket_piece.rigid_body.global_basis
+	var release_position: Vector3 = jacket_piece.rigid_body.global_position
+	var release_velocity: Vector3 = jacket_piece.rigid_body.linear_velocity
+	rig.step(1.0/60.0)
+	expect(jacket_piece.rigid_body.global_position.is_equal_approx(release_position + (release_velocity + Vector3(0,-9.8,0)/60.0)/60.0), "Manual preview carries release velocity into the first falling step")
+	expect(not jacket_piece.rigid_body.global_basis.is_equal_approx(release_basis), "Detached editor preview preserves angular motion instead of freezing rotation")
+	expect(jacket_piece.rigid_body.linear_velocity.is_equal_approx(rig.slots[&"jacket"]["preview_velocity"]), "Preview exports its current falling velocity for gameplay saves")
 	var detached_y: float = jacket_piece.get_piece_global_transform().origin.y
 	for i in range(10): rig.step(1.0/60.0)
 	expect(jacket_piece.get_piece_global_transform().origin.y<detached_y, "Detached piece visibly falls in controlled editor simulation")
@@ -156,10 +178,13 @@ func run() -> void:
 	expect(shirt["canvas"].image.get_data()==saved_mask, "Runtime masks rebuild deterministically from authored recipes and stored hits")
 	var loaded_state: Dictionary = rig.save_runtime_state()
 	expect(loaded_state["items"]["shirt"]["surface"]==saved["items"]["shirt"]["surface"], "Runtime load restores active variant proxy points, previous positions and release ownership")
-	expect(loaded_state["items"]["armor"]["piece"]==saved["items"]["armor"]["piece"] and loaded_state["items"]["armor"]["preview_velocity"]==saved["items"]["armor"]["preview_velocity"], "Runtime load restores detached piece pose and velocity state")
+	expect(state_close(loaded_state["items"]["armor"],saved["items"]["armor"]), "Runtime JSON load restores detached piece pose and velocity to serialized precision")
 	var corrupt: Dictionary = serialized.duplicate(true)
 	corrupt["items"]["shirt"]["surface"]["points"][0][0]="bad"
 	expect(not rig.load_runtime_state(corrupt) and rig.save_runtime_state()==loaded_state, "Malformed physics load is rejected atomically")
+	corrupt = serialized.duplicate(true)
+	corrupt["items"]["armor"]["piece"]["anchor_velocity"] = [0,"bad",0]
+	expect(not rig.load_runtime_state(corrupt) and rig.save_runtime_state()==loaded_state, "Malformed optional release velocity is rejected without changing live state")
 	expect(authoring_state(outfit)==before_authoring, "Preview, combat, variant switches and load do not mutate authoring Resources")
 	if DisplayServer.get_name()!="headless":
 		# Isolate the real rig material on a simple panel to prove stage alpha holes.

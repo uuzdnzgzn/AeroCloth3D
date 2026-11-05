@@ -1,5 +1,14 @@
 # Kalan işler ve devralma notu
 
+## 2026-11-05 · Geçişlerin sağlamlaştırılması
+
+Animasyon bağlantısı senkronizasyonu, kopmada hız aktarımı, duraklatılmış
+kumaş/aksesuar kaydı ve bağlantı düzenleme akışı düzeltildi.
+[CONTINUITY.md](CONTINUITY.md) kapsamı ve gerçek giysiyle yapılacak kabulü ayırır.
+Sonraki adım, bu mekanik zinciri üretim giysisinin hazırlanmış yırtık sınırları ve
+ağırlıklarıyla doğrulamak; gerçek varlık gelene kadar rastgele model/fit sistemi
+eklemek gerekmiyor. Hedef cihazdaki üç karakter ölçümü hâlâ bekliyor.
+
 ## 0.3 sonrası
 
 Godot authoring/main-screen, harita/aşama/timeline, runtime hit adapteri ve

@@ -101,3 +101,5 @@ python3 scripts/package.py
 
 [Uygulama ve test kaydı](docs/AUTHORING.md) · [gereksinimler](docs/REQUIREMENTS.md) ·
 [kurtarma geçmişi](docs/RECOVERY.md) · [önceki hibrit prototip](docs/HYBRID.md).
+
+[Animasyon → sarkma → kopma düzeltmeleri ve varlık gereksinimleri](docs/CONTINUITY.md).

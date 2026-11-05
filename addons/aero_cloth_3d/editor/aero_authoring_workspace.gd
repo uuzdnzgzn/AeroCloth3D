@@ -546,7 +546,7 @@ func _proxy_uvs(item:Resource) -> PackedVector2Array:
 	if arrays[Mesh.ARRAY_TEX_UV2]!=null and not arrays[Mesh.ARRAY_TEX_UV2].is_empty():return arrays[Mesh.ARRAY_TEX_UV2]
 	return arrays[Mesh.ARRAY_TEX_UV] if arrays[Mesh.ARRAY_TEX_UV]!=null else PackedVector2Array()
 
-func _stage_tools(_item_value:Resource) -> void:
+func _stage_tools(item:Resource) -> void:
 	var region:Resource=_region()
 	if region==null:return
 	var stage:Resource=region.stages[selected_stage]
@@ -557,16 +557,25 @@ func _stage_tools(_item_value:Resource) -> void:
 	_spin(tools,"Hasar eşiği",stage.threshold,0,10000,1,func(value:float)->void:_commit_value("Aşama eşiği",stage,"threshold",stage.threshold,value))
 	for pair in [["cut_strength","Alpha kesik"],["normal_strength","Normal detayı"],["wear_strength","Aşınma"],["burn_strength","Yanık"],["blood_strength","Kan"]]:
 		_spin(tools,pair[1],stage.get(pair[0]),0,1,.05,func(value:float)->void:_commit_value("Materyal aşaması",stage,pair[0],stage.get(pair[0]),value))
-	var broken:=LineEdit.new()
-	broken.placeholder_text="Kopan bağlantılar: 0,1"
-	broken.text=",".join(Array(stage.broken_connections).map(func(index:int)->String:return str(index)))
-	broken.text_submitted.connect(func(value:String)->void:
-		var ids:=PackedInt32Array()
-		for part in value.split(",",false):
-			if part.strip_edges().is_valid_int():ids.append(part.to_int())
-		_commit_value("Kopma bağlantıları",stage,"broken_connections",stage.broken_connections,ids)
-	)
-	tools.add_child(broken)
+	_label(tools,"Bu aşamada kopan bağlantılar",12,TEAL)
+	var slot:Dictionary=rig.slots.get(item.id,{})
+	var piece:Node3D=slot.get("piece")
+	if piece:
+		for index in range(piece.connection_points.size()):
+			var broken:=CheckButton.new()
+			broken.name="StageConnection%d" % index
+			broken.text="Bağlantı %d kopar" % (index+1)
+			broken.tooltip_text="Hazırlama bölümündeki Bağlantı %d. İşaretlenince bu aşamanın önizlemesinde kopar." % (index+1)
+			broken.button_pressed=stage.broken_connections.has(index)
+			broken.toggled.connect(func(value:bool)->void:_set_stage_connection(item,stage,index,value))
+			tools.add_child(broken)
+		var remaining:int=piece.connection_points.size()
+		for index in stage.broken_connections:
+			if index>=0 and index<piece.connection_points.size():remaining-=1
+			else:_text(tools,"Kaynakta olmayan bağlantı indeksi %d var; Inspector’da düzeltin." % index)
+		_text(tools,"Kalan bağlantı: %d · %s" % [remaining,"tamamen kopar" if remaining==0 else ("kalan bağlantıdan sarkar" if remaining==1 and piece.connection_points.size()>1 else "bağlı kalır")])
+	else:
+		_text(tools,"Kemik/proxy kumaşında fiziksel yırtık hazırlanmış proxy sınırlarıyla tanımlanır. Bu bağlantı seçenekleri sert parça hareketinde açılır.")
 	var release:=CheckButton.new()
 	release.text="Bölge hareketini serbest bırak"
 	release.button_pressed=stage.release_motion
@@ -577,6 +586,17 @@ func _stage_tools(_item_value:Resource) -> void:
 	_button(tools,"Aşamayı Inspector’da aç",func()->void:
 		if editor_plugin:editor_plugin.get_editor_interface().inspect_object(stage)
 	)
+
+func _set_stage_connection(item:Resource,stage:Resource,index:int,broken:bool) -> void:
+	var piece:Node3D=rig.slots.get(item.id,{}).get("piece")
+	if piece==null or index<0 or index>=piece.connection_points.size():return
+	var after:PackedInt32Array=stage.broken_connections.duplicate()
+	if broken and not after.has(index):after.append(index)
+	elif not broken:
+		while after.has(index):after.remove_at(after.find(index))
+	after.sort()
+	if after==stage.broken_connections:return
+	_commit_value("Aşama bağlantısı kopar",stage,"broken_connections",stage.broken_connections.duplicate(),after)
 
 func _layer_tools(item:Resource) -> void:
 	var region:Resource=_region()

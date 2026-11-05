@@ -25,7 +25,9 @@ var _visual_root: Node3D
 var _swing: Vector2 = Vector2.ZERO
 var _swing_velocity: Vector2 = Vector2.ZERO
 var _anchor_velocity: Vector3 = Vector3.ZERO
+var _anchor_angular_velocity: Vector3 = Vector3.ZERO
 var _previous_anchor_position: Vector3 = Vector3.ZERO
+var _previous_anchor_basis: Basis = Basis.IDENTITY
 var _anchor_sample_valid: bool = false
 var _stored_linear_velocity: Vector3 = Vector3.ZERO
 var _stored_angular_velocity: Vector3 = Vector3.ZERO
@@ -62,6 +64,7 @@ func configure(target_anchor: Node3D, visual: Node3D, points: Array, piece_mass:
 	shape_node.shape = box
 	rigid_body.add_child(shape_node)
 	_previous_anchor_position = anchor.global_position
+	_previous_anchor_basis = anchor.global_basis.orthonormalized()
 	_anchor_sample_valid = false
 	_update_attached_pose()
 
@@ -71,10 +74,21 @@ func _physics_process(delta: float) -> void:
 	if not is_instance_valid(anchor) or _visual_root == null:
 		_update_usec = Time.get_ticks_usec() - started_usec
 		return
-	# Capture animated anchor velocity, not the visual pendulum's velocity.
+	# Capture animation motion in world space. A rotating attachment also moves
+	# the hanging piece's origin, even when the anchor itself does not translate.
 	if _anchor_sample_valid and delta > 0.0:
 		_anchor_velocity = ((anchor.global_position - _previous_anchor_position) / delta).limit_length(20.0)
+		var rotation_delta := (anchor.global_basis.orthonormalized() * _previous_anchor_basis.inverse()).get_rotation_quaternion()
+		# q and -q represent the same rotation; use the shortest sampled arc.
+		if rotation_delta.w < 0.0: rotation_delta = -rotation_delta
+		var rotation_vector := Vector3(rotation_delta.x, rotation_delta.y, rotation_delta.z)
+		var angle: float = 2.0 * atan2(rotation_vector.length(), rotation_delta.w)
+		_anchor_angular_velocity = (rotation_vector.normalized() * angle / delta).limit_length(40.0)
+	else:
+		_anchor_velocity = Vector3.ZERO
+		_anchor_angular_velocity = Vector3.ZERO
 	_previous_anchor_position = anchor.global_position
+	_previous_anchor_basis = anchor.global_basis.orthonormalized()
 	_anchor_sample_valid = true
 	if not equipped or state == State.DETACHED:
 		_update_usec = Time.get_ticks_usec() - started_usec
@@ -90,8 +104,14 @@ func _physics_process(delta: float) -> void:
 		_swing_velocity += ((equilibrium - _swing) * swing_stiffness - _swing_velocity * swing_damping) * step
 		_swing += _swing_velocity * step
 		var bound: float = deg_to_rad(maximum_swing_degrees)
+		var stopped_x: bool = absf(_swing.x) >= bound
+		var stopped_y: bool = absf(_swing.y) >= bound
 		_swing.x = clampf(_swing.x, -bound, bound)
 		_swing.y = clampf(_swing.y, -bound, bound)
+		# A hard swing stop removes outward motion. Keeping the hidden rate here
+		# would launch an apparently stationary piece when its last link breaks.
+		if stopped_x and _swing.x * _swing_velocity.x > 0.0: _swing_velocity.x = 0.0
+		if stopped_y and _swing.y * _swing_velocity.y > 0.0: _swing_velocity.y = 0.0
 	_update_attached_pose()
 	_update_usec = Time.get_ticks_usec() - started_usec
 
@@ -122,17 +142,37 @@ func apply_hit(connection_index: int = -1, impulse: Vector3 = Vector3(1.0, 0.0, 
 		_update_attached_pose()
 	else:
 		var release_transform: Transform3D = _visual_root.global_transform
+		var release_motion: Dictionary = _attachment_motion(release_transform, connection_points[index])
 		state = State.DETACHED
 		_move_visual_to_body(release_transform)
 		rigid_body.collision_layer = 2
 		rigid_body.collision_mask = 1
 		rigid_body.freeze = false
 		rigid_body.sleeping = false
-		rigid_body.linear_velocity = _anchor_velocity
-		rigid_body.angular_velocity = Vector3(_swing_velocity.x, 0.0, _swing_velocity.y)
-		rigid_body.apply_central_impulse(impulse)
+		# A central impulse is delta-v = impulse / mass. Assign it with the
+		# inherited velocity so manual preview and same-tick saves see the full
+		# release immediately, before the physics server's next integration.
+		rigid_body.linear_velocity = release_motion["linear"] + impulse / rigid_body.mass
+		rigid_body.angular_velocity = release_motion["angular"]
 	_emit_state()
 	return true
+
+
+func _attachment_motion(pose: Transform3D, former_pivot: Vector3) -> Dictionary:
+	var linear: Vector3 = _anchor_velocity
+	var angular: Vector3 = _anchor_angular_velocity
+	# The last link has just been marked broken; state still describes the
+	# hanging pose being released, with that link as its former pivot.
+	if state == State.HANGING:
+		# Godot's default YXZ order becomes Rx * Rz here. Convert Euler rates
+		# into an angular velocity before transforming through the animated rig.
+		var local_angular := Vector3(_swing_velocity.x, -sin(_swing.x) * _swing_velocity.y, cos(_swing.x) * _swing_velocity.y)
+		var world_angular: Vector3 = anchor.global_basis.orthonormalized() * local_angular
+		var pivot_world: Vector3 = anchor.global_transform * former_pivot
+		linear += _anchor_angular_velocity.cross(pose.origin - anchor.global_position)
+		linear += world_angular.cross(pose.origin - pivot_world)
+		angular += world_angular
+	return {"linear":linear,"angular":angular}
 
 
 func _move_visual_to_body(pose: Transform3D) -> void:
@@ -163,6 +203,7 @@ func reset_damage() -> void:
 	_stored_linear_velocity = Vector3.ZERO
 	_stored_angular_velocity = Vector3.ZERO
 	_anchor_velocity = Vector3.ZERO
+	_anchor_angular_velocity = Vector3.ZERO
 	_anchor_sample_valid = false
 	_update_attached_pose()
 	_visual_root.visible = equipped
@@ -191,6 +232,8 @@ func set_equipped(value: bool) -> void:
 	else:
 		_update_attached_pose()
 	_anchor_sample_valid = false
+	_anchor_velocity = Vector3.ZERO
+	_anchor_angular_velocity = Vector3.ZERO
 	_emit_state()
 
 
@@ -199,6 +242,8 @@ func snapshot() -> Dictionary:
 		"broken": broken_connections.duplicate(), "equipped": equipped,
 		"connection_points": connection_points.duplicate(),
 		"swing": _swing, "swing_velocity": _swing_velocity,
+		"anchor_velocity": _anchor_velocity,
+		"anchor_angular_velocity": _anchor_angular_velocity,
 		"transform": get_piece_global_transform(),
 		"linear_velocity": rigid_body.linear_velocity if rigid_body != null else Vector3.ZERO,
 		"angular_velocity": rigid_body.angular_velocity if rigid_body != null else Vector3.ZERO,
@@ -231,7 +276,13 @@ func restore(data: Dictionary) -> void:
 		_move_visual_to_piece()
 		_update_attached_pose()
 	_visual_root.visible = equipped
-	_anchor_sample_valid = false
+	# Keep the saved release rates available for a hit before the next physics
+	# step, but start subsequent finite differences at the restored rig pose.
+	_anchor_velocity = data.get("anchor_velocity", Vector3.ZERO)
+	_anchor_angular_velocity = data.get("anchor_angular_velocity", Vector3.ZERO)
+	_previous_anchor_position = anchor.global_position
+	_previous_anchor_basis = anchor.global_basis.orthonormalized()
+	_anchor_sample_valid = true
 	_emit_state()
 
 

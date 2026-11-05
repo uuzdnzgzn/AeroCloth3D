@@ -16,7 +16,7 @@ check_log() {
 "$GODOT_BIN" --version
 "$GODOT_BIN" --headless --editor --path . --import --quit > artifacts/import.log 2>&1
 check_log artifacts/import.log
-for suite in tests/test_damage.gd tests/test_scenario.gd tests/test_workspace.gd tests/test_profile.gd tests/test_hybrid.gd tests/test_surface_socket.gd tests/test_damage_canvas.gd tests/test_wearable_controller.gd tests/test_proxy_surface.gd tests/test_blender_import.gd tests/test_wearable_rig.gd tests/test_game_hit_adapter.gd tests/test_runtime_mask_cache.gd tests/test_async_masks.gd tests/test_body_collision.gd; do
+for suite in tests/test_damage.gd tests/test_scenario.gd tests/test_workspace.gd tests/test_profile.gd tests/test_hybrid.gd tests/test_surface_socket.gd tests/test_damage_canvas.gd tests/test_wearable_controller.gd tests/test_proxy_surface.gd tests/test_blender_import.gd tests/test_wearable_rig.gd tests/test_game_hit_adapter.gd tests/test_runtime_mask_cache.gd tests/test_async_masks.gd tests/test_body_collision.gd tests/test_attachment_continuity.gd tests/test_damage_lifecycle.gd; do
   log="artifacts/$(basename "$suite" .gd).log"
   timeout 60s "$GODOT_BIN" --headless --path . --script "$suite" > "$log" 2>&1
   check_log "$log"
