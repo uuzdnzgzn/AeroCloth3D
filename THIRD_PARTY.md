@@ -12,3 +12,7 @@ https://creativecommons.org/licenses/by/4.0/
 
 Özgün model geri eklendiğinde özgün license.txt ve içerik atıfları da korunmalı;
 yeni test karakterine bu modelin adı veya kurtarılmış kopyası etiketi verilmemeli.
+
+## Wardrobe trial
+
+`demo/wardrobe_trial/character.glb` and the body/rig inside `wardrobe_trial.blend` derive from the user-provided Reallusion Neutral_F base used by Project Riot of Sarrows. The three garment surfaces were generated for this trial; the base body/rig is not an original AeroCloth asset. Source package terms remain applicable.

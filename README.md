@@ -1,8 +1,10 @@
 # AeroCloth3D · 0.3 Authoring
 
-Blender'da hazırlanmış karakter ve giysiler için **Godot editörü içinde** hasar,
-katman ve hareket hazırlama eklentisi. Ayrı uygulama kurmak gerekmez. F5 ile açılan
-çalışma sahnesi ayrıca test/önizleme istemcisidir.
+**Yeni küçük giysi denemesi:** F5 ayrı `WardrobeBridge` penceresini açar; Neutral_F için gömlek/korse/boyunluk ve iki morph ile yüz grubu kurallarını hedef Godot oyununa aktarır. [Kullanım ve kapsam](docs/WARDROBE_BRIDGE.md). Önceki 3B çalışma alanı pencere düğmesinden veya `demo/AuthoringLab.tscn` sahnesinden açılır. Bu JSON denemesi mevcut hasar/fizik kaynaklarına henüz birleştirilmedi.
+
+Blender'da hazırlanmış karakter ve giysiler için Godot tabanlı hazırlama projesi.
+F5 ayrı giysi köprüsünü açar; mevcut hasar/katman/harita çalışma alanı Godot editörü
+eklentisi ve `demo/AuthoringLab.tscn` sahnesi olarak korunur. Oyun projesinden ayrıdır.
 
 ![Godot hazırlama ekranı](artifacts/authoring-workspace.png)
 

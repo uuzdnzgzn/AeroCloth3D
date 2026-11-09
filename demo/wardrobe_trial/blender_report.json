@@ -1,0 +1,28 @@
+{
+  "shirt": {
+    "vertices": 120,
+    "triangles": 192,
+    "weighted_vertices": 120,
+    "morphs": [
+      "Basis",
+      "Tucked",
+      "NeckFit"
+    ]
+  },
+  "corset": {
+    "vertices": 72,
+    "triangles": 96,
+    "weighted_vertices": 72,
+    "morphs": [
+      "Basis"
+    ]
+  },
+  "collar": {
+    "vertices": 72,
+    "triangles": 96,
+    "weighted_vertices": 72,
+    "morphs": [
+      "Basis"
+    ]
+  }
+}
