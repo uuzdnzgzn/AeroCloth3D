@@ -1,0 +1,229 @@
+{
+	"body": {
+		"morphs": {
+
+		},
+		"regions": {
+
+		},
+		"scene": "",
+		"skeleton": ""
+	},
+	"body_channels": {
+		"chest": {
+			"default": 0.5,
+			"max": 1,
+			"min": 0,
+			"name": "Göğüs"
+		}
+	},
+	"garments": [
+		{
+			"bindings": [],
+			"default_variant": "default",
+			"fit_mode": "deform",
+			"id": "shirt",
+			"layer": 10,
+			"morph_limits": {
+				"NeckFit": [
+					0,
+					1
+				],
+				"Tucked": [
+					0,
+					1
+				]
+			},
+			"name": "Veyra · deneme gömleği",
+			"occupies": [
+				"shirt"
+			],
+			"parts": {
+				"hem": {
+					"covers": [],
+					"faces": {
+						"surface": 0,
+						"triangles": [
+							0,
+							1,
+							2,
+							3,
+							4,
+							5,
+							6,
+							7,
+							8,
+							9,
+							10,
+							11,
+							12,
+							13,
+							14,
+							15,
+							16,
+							17,
+							18,
+							19,
+							20,
+							21,
+							22,
+							23,
+							24,
+							25,
+							26,
+							27,
+							28,
+							29,
+							30,
+							31,
+							32,
+							33,
+							34,
+							35,
+							36,
+							37,
+							38,
+							39,
+							40,
+							41,
+							42,
+							43,
+							44,
+							45,
+							46,
+							47
+						]
+					},
+					"node": "Armature/Skeleton3D/shirt"
+				},
+				"main": {
+					"covers": [],
+					"node": "Armature/Skeleton3D/shirt"
+				}
+			},
+			"rules": [
+				{
+					"actions": {
+						"hide_parts": [
+							"hem"
+						],
+						"morphs": {
+							"Tucked": 1
+						}
+					},
+					"id": "corset-tuck",
+					"priority": 10,
+					"when": {
+						"all_items": [
+							"corset"
+						]
+					}
+				},
+				{
+					"actions": {
+						"morphs": {
+							"NeckFit": 1
+						}
+					},
+					"id": "collar-fit",
+					"priority": 20,
+					"when": {
+						"all_items": [
+							"collar"
+						]
+					}
+				}
+			],
+			"slot": "torso",
+			"tags": [
+				"shirt"
+			],
+			"variants": {
+				"default": {
+					"part_nodes": {
+
+					},
+					"scene": "res://demo/wardrobe_trial/shirt.glb",
+					"skinning": "shared"
+				}
+			}
+		},
+		{
+			"bindings": [],
+			"default_variant": "default",
+			"fit_mode": "deform",
+			"id": "corset",
+			"layer": 20,
+			"morph_limits": {
+
+			},
+			"name": "Veyra · kuşak korse",
+			"occupies": [
+				"corset"
+			],
+			"parts": {
+				"main": {
+					"covers": [],
+					"node": "Armature/Skeleton3D/corset"
+				}
+			},
+			"rules": [],
+			"slot": "waist",
+			"tags": [
+				"corset"
+			],
+			"variants": {
+				"default": {
+					"part_nodes": {
+
+					},
+					"scene": "res://demo/wardrobe_trial/corset.glb",
+					"skinning": "shared"
+				}
+			}
+		},
+		{
+			"bindings": [],
+			"default_variant": "default",
+			"fit_mode": "deform",
+			"id": "collar",
+			"layer": 20,
+			"morph_limits": {
+
+			},
+			"name": "Veyra · boyunluk",
+			"occupies": [
+				"collar"
+			],
+			"parts": {
+				"main": {
+					"covers": [],
+					"node": "Armature/Skeleton3D/collar"
+				}
+			},
+			"rules": [],
+			"slot": "neck",
+			"tags": [
+				"collar"
+			],
+			"variants": {
+				"default": {
+					"part_nodes": {
+
+					},
+					"scene": "res://demo/wardrobe_trial/collar.glb",
+					"skinning": "shared"
+				}
+			}
+		}
+	],
+	"regions": [
+		"torso"
+	],
+	"slots": [
+		"torso",
+		"waist",
+		"neck"
+	],
+	"version": 1
+}

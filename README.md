@@ -1,8 +1,10 @@
 # AeroCloth3D · 0.3 Authoring
 
-Blender'da hazırlanmış karakter ve giysiler için **Godot editörü içinde** hasar,
-katman ve hareket hazırlama eklentisi. Ayrı uygulama kurmak gerekmez. F5 ile açılan
-çalışma sahnesi ayrıca test/önizleme istemcisidir.
+**Durum:** Body Lab adventure seti artık Aero'da açılır; giysi yüzleri seçilip dış giysi koşuluyla gizleme kuralları olarak Godot'a aktarılır. [Body Lab iş akışı](docs/BODY_LAB_WORKFLOW.md). F5 giysi köprüsünü açar; [önceki küçük deneme](docs/WARDROBE_BRIDGE.md) ve `demo/AuthoringLab.tscn` hasar/fizik çalışma alanı korunur.
+
+Blender'da hazırlanmış karakter ve giysiler için Godot tabanlı hazırlama projesi.
+F5 ayrı giysi köprüsünü açar; mevcut hasar/katman/harita çalışma alanı Godot editörü
+eklentisi ve `demo/AuthoringLab.tscn` sahnesi olarak korunur. Oyun projesinden ayrıdır.
 
 ![Godot hazırlama ekranı](artifacts/authoring-workspace.png)
 
