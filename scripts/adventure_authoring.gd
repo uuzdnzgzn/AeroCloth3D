@@ -429,6 +429,7 @@ func _line(parent: Node, title: String) -> LineEdit:
 
 func _button(parent: Node, title: String, callback: Callable) -> void:
 	var button := Button.new(); button.text = title; button.tooltip_text = title; button.clip_text = true; button.add_theme_font_size_override("font_size", 14); button.custom_minimum_size.y = 30; button.pressed.connect(callback); parent.add_child(button)
+	if parent is HBoxContainer: button.custom_minimum_size.x = 96
 
 func _open_rules() -> void:
 	if busy: return
