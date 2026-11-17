@@ -3,6 +3,8 @@ extends Control
 const DEFAULT_CATALOG := "res://demo/wardrobe_trial/catalog.json"
 var catalog: Dictionary = {}
 var catalog_path := DEFAULT_CATALOG
+var export_name := "aero_trial"
+var export_asset_folder := ""
 var garments: OptionButton
 var rules: OptionButton
 var all_items: LineEdit
@@ -30,6 +32,15 @@ static func validate_catalog(data: Dictionary) -> Array[String]:
 	for garment: Dictionary in data["garments"]:
 		if not garment.get("variants") is Dictionary or not garment.get("parts") is Dictionary or not garment.get("morph_limits", {}) is Dictionary or not garment.get("rules", []) is Array:
 			return ["Varyant, parça, morph veya kural yapısı geçersiz."]
+		for part: Variant in garment["parts"].values():
+			if not part is Dictionary: return ["Parça nesne olmalı."]
+			if part.has("faces"):
+				var face: Variant = part["faces"]
+				if not face is Dictionary or not face.get("surface") is int and not face.get("surface") is float or not face.get("triangles") is Array:
+					return ["Yüz grubu yüzey/üçgen listesi geçersiz."]
+				if float(face["surface"]) < 0 or float(face["surface"]) != floorf(float(face["surface"])) or face["triangles"].is_empty(): return ["Yüz grubu boş veya yüzeyi geçersiz."]
+				for triangle: Variant in face["triangles"]:
+					if not (triangle is int or triangle is float) or float(triangle) < 0 or float(triangle) != floorf(float(triangle)): return ["Üçgen kimliği geçersiz."]
 		var rule_ids := {}
 		for rule: Variant in garment.get("rules", []):
 			if not rule is Dictionary or not rule.get("id") is String or str(rule["id"]).is_empty() or rule_ids.has(rule["id"]) or not rule.get("when", {}) is Dictionary or not rule.get("actions", {}) is Dictionary:
@@ -78,31 +89,42 @@ static func save_catalog(data: Dictionary, path: String) -> Error:
 	if error != OK: return error
 	return DirAccess.rename_absolute(absolute + ".tmp", absolute)
 
-static func export_catalog(data: Dictionary, target_project: String, source_root: String = "res://") -> Dictionary:
+static func export_catalog(data: Dictionary, target_project: String, source_root: String = "res://", output_name: String = "aero_trial", asset_folder: String = "") -> Dictionary:
 	var errors := validate_catalog(data)
 	if not errors.is_empty(): return {"error": ERR_INVALID_DATA, "message": "; ".join(errors)}
 	var target := ProjectSettings.globalize_path(target_project).simplify_path()
 	if not FileAccess.file_exists(target.path_join("project.godot")): return {"error": ERR_INVALID_PARAMETER, "message": "Hedef Godot proje klasörü olmalı."}
 	var candidate := data.duplicate(true)
+	if output_name.is_empty() or output_name.validate_filename() != output_name or "." in output_name:
+		return {"error": ERR_INVALID_PARAMETER, "message": "Çıktı adı yalnız dosya kimliği olmalı."}
+	if asset_folder.is_empty(): asset_folder = output_name
+	if asset_folder.validate_filename() != asset_folder or "." in asset_folder: return {"error": ERR_INVALID_PARAMETER, "message": "Varlık klasörü geçersiz."}
 	var copies := {}
+	var references: Array = []
+	if not str(candidate.get("body", {}).get("scene", "")).is_empty(): references.append(candidate["body"])
 	for garment: Dictionary in candidate["garments"]:
-		for variant: Dictionary in garment["variants"].values():
-			var source := str(variant.get("scene", ""))
-			if not source.begins_with("res://") or ".." in source.split("/") or source.get_extension().to_lower() != "glb":
-				return {"error": ERR_INVALID_DATA, "message": "Varyant bağımsız res:// GLB olmalı: " + source}
-			var relative := "assets/aero_trial/" + source.get_file()
-			var input := ProjectSettings.globalize_path(source_root.path_join(source.trim_prefix("res://")))
-			if not FileAccess.file_exists(input): return {"error": ERR_FILE_NOT_FOUND, "message": input}
-			if copies.has(relative) and copies[relative] != input: return {"error": ERR_ALREADY_EXISTS, "message": "GLB dosya adı çakışması: " + relative}
-			copies[relative] = input
-			variant["scene"] = "res://" + relative
+		for variant: Dictionary in garment["variants"].values(): references.append(variant)
+	for reference: Dictionary in references:
+		var source := str(reference.get("scene", ""))
+		if not source.begins_with("res://") or ".." in source.split("/") or source.get_extension().to_lower() != "glb":
+			return {"error": ERR_INVALID_DATA, "message": "Varyant bağımsız res:// GLB olmalı: " + source}
+		var relative := "assets/" + asset_folder + "/" + source.get_file()
+		var input := ProjectSettings.globalize_path(source_root.path_join(source.trim_prefix("res://")))
+		if not FileAccess.file_exists(input): return {"error": ERR_FILE_NOT_FOUND, "message": input}
+		if copies.has(relative) and copies[relative] != input: return {"error": ERR_ALREADY_EXISTS, "message": "GLB dosya adı çakışması: " + relative}
+		var fingerprint := FileAccess.get_sha256(input)
+		if reference.has("source_sha256") and reference["source_sha256"] != fingerprint:
+			return {"error": ERR_INVALID_DATA, "message": "Kaynak GLB değişmiş; yüz gruplarını yeniden doğrulayın: " + input}
+		reference["source_sha256"] = fingerprint
+		copies[relative] = input
+		reference["scene"] = "res://" + relative
 	for relative: String in copies:
 		var output := target.path_join(relative)
 		var error := DirAccess.make_dir_recursive_absolute(output.get_base_dir())
-		if error == OK: error = DirAccess.copy_absolute(copies[relative], output)
+		if error == OK and copies[relative].simplify_path() != output.simplify_path(): error = DirAccess.copy_absolute(copies[relative], output)
 		if error == OK: error = _configure_import(output, "res://" + relative)
 		if error != OK: return {"error": error, "message": output}
-	var path := target.path_join("data/wardrobe/aero_trial.json")
+	var path := target.path_join("data/wardrobe/" + output_name + ".json")
 	var error := save_catalog(candidate, path)
 	return {"error": error, "path": path, "message": "Aktarıldı: " + path if error == OK else "Katalog yazılamadı."}
 
@@ -139,9 +161,10 @@ func _ready() -> void:
 		if _apply(): status.text = "Kaydetme: " + error_string(save_catalog(catalog, catalog_path)))
 	destination = _line(panel, "Hedef Godot proje klasörü · project.godot içeren mutlak yol")
 	destination.text = ProjectSettings.globalize_path("res://").trim_suffix("/").get_base_dir().path_join("prototype")
+	_button(panel, "Body Lab · örtülen yüzleri düzenle", func(): get_tree().change_scene_to_file("res://demo/AdventureAuthoring.tscn"))
 	_button(panel, "3B Aero çalışma alanını aç", func(): get_tree().change_scene_to_file("res://demo/AuthoringLab.tscn"))
 	_button(panel, "GLB + kataloğu hedef projeye aktar", func():
-		if _apply(): status.text = str(export_catalog(catalog, destination.text.strip_edges()).get("message", "Aktarım başarısız.")))
+		if _apply(): status.text = str(export_catalog(catalog, destination.text.strip_edges(), "res://", export_name, export_asset_folder).get("message", "Aktarım başarısız.")))
 	status = _label(panel, "")
 	garments.item_selected.connect(func(_index: int): _show_garment())
 	rules.item_selected.connect(func(_index: int): _show_rule())

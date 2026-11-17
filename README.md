@@ -1,6 +1,6 @@
 # AeroCloth3D · 0.3 Authoring
 
-**Yeni küçük giysi denemesi:** F5 ayrı `WardrobeBridge` penceresini açar; Neutral_F için gömlek/korse/boyunluk ve iki morph ile yüz grubu kurallarını hedef Godot oyununa aktarır. [Kullanım ve kapsam](docs/WARDROBE_BRIDGE.md). Önceki 3B çalışma alanı pencere düğmesinden veya `demo/AuthoringLab.tscn` sahnesinden açılır. Bu JSON denemesi mevcut hasar/fizik kaynaklarına henüz birleştirilmedi.
+**Durum:** Body Lab adventure seti artık Aero'da açılır; giysi yüzleri seçilip dış giysi koşuluyla gizleme kuralları olarak Godot'a aktarılır. [Body Lab iş akışı](docs/BODY_LAB_WORKFLOW.md). F5 giysi köprüsünü açar; [önceki küçük deneme](docs/WARDROBE_BRIDGE.md) ve `demo/AuthoringLab.tscn` hasar/fizik çalışma alanı korunur.
 
 Blender'da hazırlanmış karakter ve giysiler için Godot tabanlı hazırlama projesi.
 F5 ayrı giysi köprüsünü açar; mevcut hasar/katman/harita çalışma alanı Godot editörü

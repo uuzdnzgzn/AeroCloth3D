@@ -1,0 +1,276 @@
+{
+	"body": {
+		"fixed_fit": true,
+		"hide_armor_proxies": true,
+		"morphs": {
+
+		},
+		"preserve_nodes": [
+			"SwordMotion"
+		],
+		"regions": {
+
+		},
+		"scene": "res://assets/adventure_work/body.glb",
+		"skeleton": "Armature/Skeleton3D",
+		"source_sha256": "ef011909cd2ead57dd9d69db946174913defb6b26c2d925e4d7ee3e7ab6662a3"
+	},
+	"body_channels": {
+		"sway": {
+			"default": 0.6,
+			"max": 1.0,
+			"min": 0.0,
+			"name": "Etek salınımı"
+		}
+	},
+	"garments": [
+		{
+			"bindings": [],
+			"default_variant": "default",
+			"fit_mode": "deform",
+			"id": "adventure_base",
+			"layer": 10.0,
+			"morph_limits": {
+
+			},
+			"name": "Krem bluz ve iç pantolon",
+			"occupies": [
+				"adventure_base"
+			],
+			"parts": {
+				"AV_Bloomers": {
+					"covers": [],
+					"node": "Armature/Skeleton3D/AV_Bloomers"
+				},
+				"AV_Blouse": {
+					"covers": [],
+					"node": "Armature/Skeleton3D/AV_Blouse"
+				},
+				"AV_Stockings": {
+					"covers": [],
+					"node": "Armature/Skeleton3D/AV_Stockings"
+				}
+			},
+			"rules": [],
+			"slot": "torso",
+			"tags": [
+				"adventure",
+				"base"
+			],
+			"variants": {
+				"default": {
+					"part_nodes": {
+
+					},
+					"scene": "res://assets/adventure_work/base.glb",
+					"skinning": "shared",
+					"source_sha256": "5fe4cd99219b711fed168c75a0de0859805b9bacac49b2a10db265782d29bcec"
+				}
+			}
+		},
+		{
+			"bindings": [],
+			"default_variant": "default",
+			"fit_mode": "deform",
+			"id": "adventure_vest",
+			"layer": 10.0,
+			"morph_limits": {
+
+			},
+			"name": "Açık önlü yelek",
+			"occupies": [
+				"adventure_vest"
+			],
+			"parts": {
+				"AV_Vest": {
+					"covers": [],
+					"node": "Armature/Skeleton3D/AV_Vest"
+				}
+			},
+			"rules": [],
+			"slot": "outer",
+			"tags": [
+				"adventure",
+				"vest"
+			],
+			"variants": {
+				"default": {
+					"part_nodes": {
+
+					},
+					"scene": "res://assets/adventure_work/vest.glb",
+					"skinning": "shared",
+					"source_sha256": "b0940bb9af99b255f4b512625318ffc723aa4e228fa7cc95d558679bf53d23b3"
+				}
+			}
+		},
+		{
+			"bindings": [],
+			"default_variant": "default",
+			"fit_mode": "deform",
+			"id": "adventure_corset",
+			"layer": 30.0,
+			"morph_limits": {
+
+			},
+			"name": "Deri korse ve tokalar",
+			"occupies": [
+				"adventure_corset"
+			],
+			"parts": {
+				"AV_Brass": {
+					"covers": [],
+					"node": "Armature/Skeleton3D/AV_Brass"
+				},
+				"AV_Corset": {
+					"covers": [],
+					"node": "Armature/Skeleton3D/AV_Corset"
+				},
+				"AV_Gems": {
+					"covers": [],
+					"node": "Armature/Skeleton3D/AV_Gems"
+				}
+			},
+			"rules": [],
+			"slot": "waist",
+			"tags": [
+				"adventure",
+				"corset"
+			],
+			"variants": {
+				"default": {
+					"part_nodes": {
+
+					},
+					"scene": "res://assets/adventure_work/corset.glb",
+					"skinning": "shared",
+					"source_sha256": "6a7fbbec33e3988e938ab82710213596fe652d5b59df221f85538236acb7e409"
+				}
+			}
+		},
+		{
+			"bindings": [],
+			"default_variant": "default",
+			"fit_mode": "deform",
+			"id": "adventure_skirt",
+			"layer": 10.0,
+			"morph_limits": {
+				"CorsetGather": [
+					0.0,
+					1.0
+				],
+				"Flutter": [
+					-1.0,
+					1.0
+				],
+				"Sway": [
+					-1.0,
+					1.0
+				]
+			},
+			"name": "Toplanmış yeşil etek",
+			"occupies": [
+				"adventure_skirt"
+			],
+			"parts": {
+				"AV_Lace": {
+					"covers": [],
+					"node": "Armature/Skeleton3D/AV_Lace"
+				},
+				"AV_Skirt": {
+					"covers": [],
+					"node": "Armature/Skeleton3D/AV_Skirt"
+				},
+				"AV_Tabs": {
+					"covers": [],
+					"node": "Armature/Skeleton3D/AV_Tabs"
+				}
+			},
+			"rules": [
+				{
+					"actions": {
+						"morphs": {
+							"CorsetGather": 1.0
+						}
+					},
+					"id": "corset-gather",
+					"priority": 10.0,
+					"when": {
+						"all_items": [
+							"adventure_corset"
+						]
+					}
+				}
+			],
+			"slot": "legs",
+			"tags": [
+				"adventure",
+				"skirt"
+			],
+			"variants": {
+				"default": {
+					"motion": {
+						"channel": "sway",
+						"morphs": [
+							"Sway",
+							"Flutter"
+						],
+						"period": 2.0,
+						"response": "locomotion"
+					},
+					"part_nodes": {
+
+					},
+					"scene": "res://assets/adventure_work/skirt.glb",
+					"skinning": "shared",
+					"source_sha256": "0212bff2e3c14a0b78d08278afb99564732f52532ef8f4ebe401d0a7823e988e"
+				}
+			}
+		},
+		{
+			"bindings": [],
+			"default_variant": "default",
+			"fit_mode": "deform",
+			"id": "adventure_gaiters",
+			"layer": 10.0,
+			"morph_limits": {
+
+			},
+			"name": "Yeşil tozluklar",
+			"occupies": [
+				"adventure_gaiters"
+			],
+			"parts": {
+				"AV_Gaiters": {
+					"covers": [],
+					"node": "Armature/Skeleton3D/AV_Gaiters"
+				}
+			},
+			"rules": [],
+			"slot": "feet",
+			"tags": [
+				"adventure",
+				"gaiters"
+			],
+			"variants": {
+				"default": {
+					"part_nodes": {
+
+					},
+					"scene": "res://assets/adventure_work/gaiters.glb",
+					"skinning": "shared",
+					"source_sha256": "648bc390a80e70b56821e292c12d64b566f1dbe041a63901fd898fed9374980d"
+				}
+			}
+		}
+	],
+	"regions": [],
+	"slots": [
+		"torso",
+		"outer",
+		"waist",
+		"legs",
+		"feet"
+	],
+	"version": 1.0
+}
