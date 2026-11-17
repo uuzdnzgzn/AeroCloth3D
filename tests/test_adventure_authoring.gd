@@ -10,12 +10,25 @@ func _initialize() -> void:
 	_run.call_deferred()
 
 func _run() -> void:
+	var work_before := FileAccess.get_file_as_bytes(Authoring.WORK_CATALOG)
 	var view := Authoring.new()
 	root.add_child(view)
 	check(view.catalog.get("garments", []).size() == 5, "Stage adventure set before this integration test")
 	if view.catalog.is_empty(): view.free(); quit(1); return
-	check(view.originals.size() == 11, "Adventure clothing mesh count differs")
+	check(view.originals.size() == 15, "Adventure clothing mesh count differs")
 	check(view.assembly.get_child_count() == 6, "Body and five garment sets not loaded")
+	view.garments.select(view.catalog.garments.size()); view._show_garment()
+	check(view._garment().id == "__body__" and view.conditions.item_count == 5, "Body target must offer every clothing condition")
+	var body_root: Node3D = view.garment_roots["__body__"]
+	var body_node: MeshInstance3D = body_root.get_node("Armature/Skeleton3D/CC_Base_Body")
+	var body_result := Authoring.write_face_rule(view.catalog, "__body__", "test_body", "Armature/Skeleton3D/CC_Base_Body", 0, [0,1], ["adventure_base"])
+	check(body_result.errors.is_empty(), "Body face authoring rejected")
+	check(body_result.catalog.body.masking.parts.test_body.faces.triangles == [0,1], "Body triangles not stored separately")
+	check(not view.catalog.body.masking.parts.has("test_body"), "Body authoring mutated source")
+	body_result.catalog.body.masking.parts.test_body.faces.topology_sha256 = Authoring.topology_sha256(body_node.mesh,0)
+	view.catalog = body_result.catalog
+	check(view._topology_errors().is_empty(), "Body topology validation failed")
+	view.garments.select(0); view._show_garment()
 	var before_frame := Engine.get_process_frames()
 	var source_fixture := "user://adventure_source_" + str(Time.get_ticks_usec())
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(source_fixture))
@@ -27,7 +40,7 @@ func _run() -> void:
 	var chosen_source: String = view.source_project.text
 	var chosen_target: String = view.target_project.text
 	await view._import_set()
-	check(not view.busy and view.originals.size() == 11, "Asynchronous import did not finish with a complete set")
+	check(not view.busy and view.originals.size() == 15, "Asynchronous import did not finish with a complete set")
 	check(Engine.get_process_frames() > before_frame, "Import blocked UI processing")
 	check(view.source_project.text == chosen_source and view.target_project.text == chosen_target, "Import lost selected source/target directories")
 	_cleanup(ProjectSettings.globalize_path(source_fixture))
@@ -98,6 +111,10 @@ func _run() -> void:
 	check(filtered_skirt.surface_get_arrays(0)[Mesh.ARRAY_BONES] == skirt_mesh.mesh.surface_get_arrays(0)[Mesh.ARRAY_BONES], "Preview mask changed skin bones")
 	view.free()
 	_cleanup(ProjectSettings.globalize_path(destination))
+	var restored := FileAccess.open(Authoring.WORK_CATALOG, FileAccess.WRITE)
+	restored.store_buffer(work_before)
+	restored.close()
+	check(FileAccess.get_file_as_bytes(Authoring.WORK_CATALOG) == work_before, "Test must restore working catalog")
 	print("adventure authoring: " + ("FAIL" if failed else "PASS"))
 	quit(1 if failed else 0)
 

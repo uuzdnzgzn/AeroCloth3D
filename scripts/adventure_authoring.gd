@@ -30,6 +30,14 @@ var busy := false
 var brush_radius: SpinBox
 
 static func write_face_rule(data: Dictionary, garment_id: String, part_id: String, node_path: String, surface_id: int, triangles: Array, outer_ids: Array) -> Dictionary:
+	if garment_id=="__body__":
+		var proxy:=data.duplicate(true);var mask:Dictionary=proxy.get("body",{}).get("masking",{"parts":{},"rules":[]}).duplicate(true)
+		mask.merge({"id":"__body_proxy__","variants":{"default":{"scene":""}},"morph_limits":{}},true)
+		proxy.garments.append(mask);proxy.body.erase("masking")
+		var result:=write_face_rule(proxy,"__body_proxy__",part_id,node_path,surface_id,triangles,outer_ids)
+		if not result.get("errors",[]).is_empty():return result
+		var saved:Dictionary=result.catalog.garments.pop_back();result.catalog.body["masking"]={"id":"__body__","parts":saved.parts,"rules":saved.rules}
+		return result
 	var candidate := data.duplicate(true)
 	if part_id.strip_edges().is_empty() or node_path.is_empty() or triangles.is_empty() or outer_ids.is_empty() or surface_id < 0:
 		return {"errors": ["Grup adı, mesh, seçili yüz ve en az bir dış giysi gerekli."]}
@@ -93,7 +101,7 @@ func _ready() -> void:
 	var sibling := ProjectSettings.globalize_path("res://").trim_suffix("/").get_base_dir().path_join("prototype")
 	if FileAccess.file_exists(sibling.path_join("project.godot")): source_project.text = sibling
 	_button(panel, "Adventure setini kopyala / aç", _import_set)
-	_label(panel, "2. İç giysiyi ve mesh'i seç; sol tuşla yüzlere tıkla")
+	_label(panel, "2. Beden/giysi ve mesh seç; sol tuşla yüzlere tıkla")
 	garments = OptionButton.new(); garments.fit_to_longest_item = false; garments.clip_text = true; panel.add_child(garments); garments.item_selected.connect(func(_i: int): _show_garment())
 	meshes = OptionButton.new(); meshes.fit_to_longest_item = false; meshes.clip_text = true; panel.add_child(meshes); meshes.item_selected.connect(func(_i: int): _choose_mesh())
 	_label(panel, "Yüzey (malzeme bölümü; üçgen kimliği bu yüzeye aittir)")
@@ -182,6 +190,7 @@ func _load_work() -> void:
 		if body:
 			assembly.add_child(body)
 			_freeze_rest_meshes(body)
+			garment_roots["__body__"]=body;_remember_meshes(body)
 	for garment: Dictionary in catalog["garments"]:
 		var variant: Dictionary = garment["variants"][garment.get("default_variant", "default")]
 		var model := _load_glb(variant["scene"])
@@ -191,9 +200,10 @@ func _load_work() -> void:
 		garment_roots[garment["id"]] = model
 		garments.add_item(str(garment.get("name", garment["id"])))
 		_remember_meshes(model)
+	if garment_roots.has("__body__"):garments.add_item("BEDEN · giysi altında kalan yüzler")
 	dirty = false; selection_dirty = false
 	_show_garment()
-	status.text = "Adventure seti hazır. Kaynaklar Aero'ya kopyalandı; bir iç giysi seçin."
+	status.text = "Adventure seti hazır. Kaynaklar Aero'ya kopyalandı; bedeni veya bir iç giysi seçin."
 
 func _freeze_rest_meshes(node: Node) -> void:
 	# Bind/rest products share one transform in this exported rest pose. Detach
@@ -216,6 +226,7 @@ func _remember_meshes(node: Node) -> void:
 	for child in node.get_children(): _remember_meshes(child)
 
 func _garment() -> Dictionary:
+	if garments.selected==catalog.get("garments",[]).size():return catalog.body.get_or_add("masking",{"id":"__body__","parts":{},"rules":[]})
 	return catalog["garments"][garments.selected] if garments.selected >= 0 else {}
 
 func _show_garment() -> void:
@@ -312,7 +323,9 @@ func _export() -> void:
 
 func _topology_errors() -> Array[String]:
 	var problems: Array[String] = []
-	for garment: Dictionary in catalog.get("garments", []):
+	var entries:Array=catalog.get("garments", []).duplicate()
+	if catalog.get("body",{}).has("masking"):entries.append(catalog.body.masking)
+	for garment: Dictionary in entries:
 		var model: Node3D = garment_roots.get(garment["id"])
 		if model == null: problems.append("Giysi yüklenemedi: " + garment["id"]); continue
 		for id: String in garment["parts"]:

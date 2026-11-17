@@ -1,6 +1,6 @@
 # Body Lab → Aero → Godot
 
-**Durum:** Adventure setinin altı GLB'si ve kataloğu Aero'ya alınır; iç giyside seçilen üçgenler dış giysi koşuluyla gizlenir. Kaynak Blender/GLB geometrisi silinmez. Hazırlık kaydı Aero'da, oyun kuralları Godot kataloğunda tutulur.
+**Durum:** Adventure setinin altı GLB'si ve kataloğu Aero'ya alınır; beden veya iç giyside seçilen üçgenler dış giysi koşuluyla gizlenir. Kaynak Blender/GLB geometrisi silinmez. Hazırlık kaydı Aero'da, oyun kuralları Godot kataloğunda tutulur.
 
 1. Blender'da Body Lab karakterini/giysisini hazırla ve oyuna aktar: oyun klasöründe `assets/body_lab/*.glb`, `data/wardrobe/adventure.json` bulunmalı. Parçaların kemik ağırlıkları ve morph'ları GLB'de kalır.
 2. Aero projesini aç, F5 → **Body Lab · örtülen yüzleri düzenle**. Doğrudan açılış: `godot --path AeroCloth3D res://demo/AdventureAuthoring.tscn`.
@@ -12,8 +12,8 @@
 
 **Kayıt anlamı:** `parts.<grup>.faces` yüzey ve üçgen kimliklerini; `rules.hide-<grup>` dış giysi koşulunu ve `actions.hide_parts` eylemini taşır. Bu işlem oyunda yalnız çizilen üçgen indekslerini filtreler; ağırlıkları/morph'ları korur. Kalıcı model kesme Blender'da ayrı bir model değişikliğidir.
 
-**Sınır:** Bu ekranda yüz seçimi giysiler içindir. Önizleme dinlenme pozundadır; koşul/morph sayısal düzenlemesi **Koşul ve morph kuralları** düğmesindedir. Animasyonlu uyum oyunda kontrol edilir. Yeniden **kopyala / aç** çalışma kopyasını kaynak oyun kataloğuyla değiştirir; kaydedilmemiş düzenleme varsa işlem durur. Kaydetme çalışma kaydını korur; kaynak oyunda da saklamak için önce oyuna aktar.
+**Sınır:** Beden için listeden **BEDEN · giysi altında kalan yüzler → CC_Base_Body** seç. Tam örtülen yüzleri seçip koşula ilgili giysiyi ekle; açıklık kenarlarında pay bırak. Beden grupları `body.masking.parts/rules` içinde saklanır; giysi çıkınca beden geri gelir. Önizleme dinlenme pozundadır; koşul/morph sayısal düzenlemesi **Koşul ve morph kuralları** düğmesindedir. Animasyonlu uyum oyunda kontrol edilir. Yeniden **kopyala / aç** çalışma kopyasını kaynak oyun kataloğuyla değiştirir; kaydedilmemiş düzenleme varsa işlem durur. Kaydetme çalışma kaydını korur; kaynak oyunda da saklamak için önce oyuna aktar.
 
 **Topoloji:** Aero gerçek Godot içe aktarılmış mesh'lerini kullanır; ham Blender poligon kimliği kullanılmaz. GLB importunda LOD üretimi kapatılır. Yüz grupları içe aktarılmış yüzey topoloji hash'i taşır; değişen mesh'te tekrar seçim gerekir. GLB dosyası hazırlıktan sonra değişirse dışa aktarım durur. Blender yeniden dışa aktarma ve değişen topoloji davranışı kaynak projenin sorumluluğundadır.
 
-**Kontrol:** `godot --headless --path AeroCloth3D --script tests/test_adventure_authoring.gd` (seti bir kez içe aktardıktan sonra). Test beş giysi/11 mesh, gövde aktarımı, üçgen sırası, koşul ve kaynak geometrisinin korunmasını denetler. [Önceki köprü](WARDROBE_BRIDGE.md) ve [oyun tarafındaki kaynak hazırlama akışı](https://github.com/uuzdnzgzn/project-riot-of-sarrows/blob/feature/clothing-authoring-combat/docs/giysi-hazirlama-akisi.md).
+**Kontrol:** `godot --headless --path AeroCloth3D --script tests/test_adventure_authoring.gd` (seti bir kez içe aktardıktan sonra). Test beden ve beş giysi/15 mesh, gövde aktarımı, üçgen sırası, koşul ve kaynak geometrisinin korunmasını denetler. [Önceki köprü](WARDROBE_BRIDGE.md) ve [oyun tarafındaki kaynak hazırlama akışı](https://github.com/uuzdnzgzn/project-riot-of-sarrows/blob/feature/clothing-authoring-combat/docs/giysi-hazirlama-akisi.md).

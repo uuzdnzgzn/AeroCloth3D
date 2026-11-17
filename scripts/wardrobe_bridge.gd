@@ -21,6 +21,13 @@ static func load_catalog(path: String) -> Dictionary:
 	return parsed if parsed is Dictionary else {}
 
 static func validate_catalog(data: Dictionary) -> Array[String]:
+	if data.get("version") != 1 or not data.get("garments") is Array:return ["Katalog v1 / garments gerekli."]
+	if data.get("body",{}) is Dictionary and data.body.has("masking"):
+		var mask:Variant=data.body.masking
+		if not mask is Dictionary or not mask.get("parts") is Dictionary or not mask.get("rules",[]) is Array:return ["Beden yüz maskesi geçersiz."]
+		var proxy:=data.duplicate(true);proxy.body.erase("masking")
+		proxy.garments.append({"id":"__body_proxy__","variants":{"default":{"scene":""}},"parts":mask.parts,"rules":mask.get("rules",[]),"morph_limits":{}})
+		return validate_catalog(proxy)
 	var problems: Array[String] = []
 	if data.get("version") != 1 or not data.get("garments") is Array:
 		return ["Katalog v1 / garments gerekli."]
