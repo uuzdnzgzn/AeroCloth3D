@@ -1,10 +1,10 @@
 # Body Lab → Aero → Godot
 
-**Durum:** Adventure setinin altı GLB'si ve kataloğu Aero'ya alınır; beden veya iç giyside seçilen üçgenler dış giysi koşuluyla gizlenir. Kaynak Blender/GLB geometrisi silinmez. Hazırlık kaydı Aero'da, oyun kuralları Godot kataloğunda tutulur.
+**Durum:** Body Lab kataloğu ve ona bağlı GLB'ler Aero'ya alınır. Beden veya iç giyside seçilen üçgenler, ilgili giysi kuşanıldığında gizlenir. Hazırlık kaydı Aero'da, oyun kuralları Godot kataloğunda tutulur.
 
-1. Blender'da Body Lab karakterini/giysisini hazırla ve oyuna aktar: oyun klasöründe `assets/body_lab/*.glb`, `data/wardrobe/adventure.json` bulunmalı. Parçaların kemik ağırlıkları ve morph'ları GLB'de kalır.
+1. Blender'da giysiyi hazırla ve oyuna aktar. Aero, `data/wardrobe/adventure.json` kaydındaki GLB yollarını kullanır. Giysi Stüdyosu'nun canlı beden GLB'siyle eşleşen mevcut yüz grupları açılışta korunur.
 2. Aero projesini aç, F5 → **Body Lab · örtülen yüzleri düzenle**. Doğrudan açılış: `godot --path AeroCloth3D res://demo/AdventureAuthoring.tscn`.
-3. **Klasör seç…** ile kaynak Godot proje klasörünü seç → **Adventure setini kopyala / aç**. Altı GLB `assets/adventure_work/` içine, katalog `data/wardrobe/adventure_work.json` içine kopyalanır. Godot içe aktarımı arka planda çalışır; süre ekranda görünür, pencere kullanılabilir. Tamamlanınca set açılır ve klasör seçimleri korunur.
+3. **Klasör seç…** ile kaynak Godot proje klasörünü seç → **Adventure setini kopyala / aç**. Katalog ve bağlı GLB'ler Aero çalışma kopyasına alınır. Godot içe aktarımı arka planda tamamlanınca set açılır.
 4. Örtülecek **iç giysiyi**, mesh'ini ve malzeme yüzeyini seç. **İç giysiyi göster / tüm set** ile dış katmanları kaldır. Sağ sürükle döner; tekerlek yakınlaşır. Sol sürükle yüz seçer; Shift seçimden çıkarır. Fırça yarıçapı 0 tek üçgen seçer.
 5. Gruba anlamlı bir ad ver (`bluz_korse_alti`). Gizlemeyi gerektiren dış giysiyi seç; birden fazla seçildiğinde **hepsi** giyilmiş olmalı. **Seçimi gizle / göster** sonucu geçici olarak gösterir.
 6. **Yüz grubu + gizleme kuralını uygula**, sonra **Çalışma kataloğunu kaydet**. Mevcut yüz grubunu listeden seçip düzenleyebilirsin. Yeni grup adı yeni kural oluşturur; mevcut grup aynı kurala yazılır. Kaydet/Aktar yalnız uygulanmış kuralları içerir.

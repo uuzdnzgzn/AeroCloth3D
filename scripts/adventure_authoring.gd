@@ -191,6 +191,7 @@ func _load_work() -> void:
 			assembly.add_child(body)
 			_freeze_rest_meshes(body)
 			garment_roots["__body__"]=body;_remember_meshes(body)
+			_use_live_body_mask(body)
 	for garment: Dictionary in catalog["garments"]:
 		var variant: Dictionary = garment["variants"][garment.get("default_variant", "default")]
 		var model := _load_glb(variant["scene"])
@@ -224,6 +225,32 @@ func _freeze_rest_meshes(node: Node) -> void:
 func _remember_meshes(node: Node) -> void:
 	if node is MeshInstance3D and node.mesh != null: originals[node] = node.mesh
 	for child in node.get_children(): _remember_meshes(child)
+
+func _use_live_body_mask(body: Node3D) -> void:
+	var spec: Dictionary = catalog["body"]
+	if not spec.has("masking") or not spec.get("runtime_masking") is Dictionary:
+		return
+	if spec.get("runtime_masking_source_sha256", "") != JSON.stringify(spec["masking"]).sha256_text():
+		return
+	# Studio exports use the live GLB as the editing source. Reuse the
+	# existing mapped group only after every surface fingerprint matches.
+	var native: Dictionary = spec["runtime_masking"].duplicate(true)
+	if not native.get("parts") is Dictionary or native["parts"].is_empty():
+		return
+	for part: Dictionary in native["parts"].values():
+		var path := str(part["node"])
+		var mesh := body.get_node_or_null(path) as MeshInstance3D
+		if mesh == null and path == "Armature/Skeleton3D/CC_Base_Body":
+			mesh = body.get_node_or_null("RT_BodyRig/Skeleton3D/RT_CC_Base_Body") as MeshInstance3D
+		var faces: Dictionary = part["faces"]
+		var surface_id := int(faces["surface"])
+		var fingerprint := str(faces.get("topology_sha256", ""))
+		if mesh == null or mesh.mesh == null or surface_id < 0 or surface_id >= mesh.mesh.get_surface_count() or fingerprint.is_empty():
+			return
+		if topology_sha256(mesh.mesh, surface_id) != fingerprint:
+			return
+		part["node"] = str(body.get_path_to(mesh))
+	spec["masking"] = native
 
 func _garment() -> Dictionary:
 	if garments.selected==catalog.get("garments",[]).size():return catalog.body.get_or_add("masking",{"id":"__body__","parts":{},"rules":[]})
